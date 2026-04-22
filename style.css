@@ -900,7 +900,7 @@ input, button, textarea, select, label {
 }
 .dc-reference {
   width: 100%;
-  max-width: none;
+  max-width: 600px;
   margin: 32px auto 0;
   padding: 0;
 }
