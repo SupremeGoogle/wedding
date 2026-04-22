@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Диана &amp; Виктор — Приглашение на свадьбу</title>
+  <meta name="description" content="Приглашение на свадьбу Дианы и Виктора — 11 июля 2026 года" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500&family=Alex+Brush&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <audio id="weddingMusic" src="песня.mp3" preload="auto"></audio>
+  
+  <!-- ============ ENVELOPE COVER ============ -->
+  <div class="cover" id="cover">
+    <div class="cover-inner">
+      <div class="envelope-wrap">
+        <div class="envelope-body">
+          <div class="env-flap-back"></div>
+          <div class="env-side env-side-left"></div>
+          <div class="env-side env-side-right"></div>
+          <div class="env-bottom"></div>
+          <div class="env-card">
+            <p class="env-card-title">ПРИГЛАШЕНИЕ НА СВАДЬБУ</p>
+            <div class="env-card-names">
+              <span>Диана</span>
+              <span class="env-amp">&</span>
+              <span>Виктор</span>
+            </div>
+            <p class="env-card-date">11 · 07 · 2026</p>
+          </div>
+          <div class="env-flap-front" id="envFlap">
+            <div class="wax-seal" id="waxSeal">
+              <span class="seal-letter">Д&В</span>
+            </div>
+          </div>
+        </div>
+        <p class="cover-hint" id="coverHint">нажмите, чтобы открыть</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Decorative leaves -->
+    <div class="leaf leaf-1" aria-hidden="true"></div>
+    <div class="leaf leaf-2" aria-hidden="true"></div>
+    <div class="leaf leaf-3" aria-hidden="true"></div>
+    <div class="leaf leaf-4" aria-hidden="true"></div>
+    <div class="leaf leaf-5" aria-hidden="true"></div>
+    <div class="leaf leaf-6" aria-hidden="true"></div>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="hero">
+
+      <div class="bunting" aria-hidden="true">
+        <div class="bunting-rope"></div>
+        <span class="flag f1"></span>
+        <span class="flag f2"></span>
+        <span class="flag f3"></span>
+        <span class="flag f4"></span>
+        <span class="flag f5"></span>
+        <span class="flag f6"></span>
+        <span class="flag f7"></span>
+        <span class="flag f8"></span>
+        <span class="flag f9"></span>
+      </div>
+
+      <p class="hero-rhyme fade-in-hero">тили ~ тили тесто</p>
+
+      <div class="polaroids fade-in-hero delay-1">
+        <div class="polaroid polaroid-left">
+          <div class="polaroid-img">
+            <img src="Невеста.png" alt="Диана в детстве" />
+          </div>
+          <p class="polaroid-caption">— интересно, кто будет<br>моим мужем, когда<br>я вырасту?</p>
+        </div>
+        <div class="polaroid polaroid-right">
+          <div class="polaroid-img">
+            <img src="Жених.jpg" alt="Виктор в детстве" />
+          </div>
+          <p class="polaroid-caption">— им буду я 🤍</p>
+        </div>
+      </div>
+
+      <div class="hero-intro-text fade-in-hero delay-2">
+        <p class="intro-ital">Узнали этих ребятишек?</p>
+        <p>Да-да, это мы! Время пролетело так быстро, представляете?</p>
+        <p>И вот мы повзрослели и приняли решение, что пора жениться!</p>
+        <p>Приглашаем вас присоединиться к нашему первому семейному празднику — нашей свадьбе!</p>
+        <p>Будем рады, если это событие вы разделите вместе с нами.</p>
+      </div>
+
+      <div class="hero-names fade-in-hero delay-3">
+        <div class="hero-name">
+          <span class="name-cap">Диана</span>
+        </div>
+        <div class="hero-name hero-name-right">
+          <span class="name-cap">Виктор</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== INVITATION MESSAGE ===== -->
+    <section class="message-section reveal">
+      <!-- Two couple photos styled as Polaroids -->
+      <div class="msg-polaroids">
+        <div class="polaroid msg-pol-1">
+          <div class="polaroid-img">
+            <img src="Пара1.jpg" alt="Диана и Виктор 1" />
+          </div>
+          <p class="polaroid-caption">Счастливые мгновения</p>
+          <canvas class="msg-canvas"></canvas>
+        </div>
+        
+        <div class="polaroid msg-pol-2 msg-main-photo">
+          <div class="polaroid-img">
+            <img src="Пара2.jpg" alt="Диана и Виктор 2" />
+          </div>
+          <p class="polaroid-caption">Навстречу будущему</p>
+          <canvas class="msg-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CALENDAR ===== -->
+    <section class="calendar-section" id="when">
+      <div class="section-tag reveal">КОГДА</div>
+      
+      <div class="cal-card reveal">
+        <h2 class="cal-title">МЫ ЖДЁМ ВАС</h2>
+        <div class="cal-month">Июль 2026</div>
+        
+        <div class="cal-grid">
+          <div class="dn">Пн</div><div class="dn">Вт</div><div class="dn">Ср</div><div class="dn">Чт</div><div class="dn">Пт</div><div class="dn">Сб</div><div class="dn">Вс</div>
+          
+          <div class="d d-empty"></div><div class="d d-empty"></div>
+          <div class="d">1</div><div class="d">2</div><div class="d">3</div><div class="d">4</div><div class="d">5</div>
+          <div class="d">6</div><div class="d">7</div><div class="d">8</div><div class="d">9</div><div class="d">10</div><div class="d d-marked">11</div><div class="d">12</div>
+          <div class="d">13</div><div class="d">14</div><div class="d">15</div><div class="d">16</div><div class="d">17</div><div class="d">18</div><div class="d">19</div>
+          <div class="d">20</div><div class="d">21</div><div class="d">22</div><div class="d">23</div><div class="d">24</div><div class="d">25</div><div class="d">26</div>
+          <div class="d">27</div><div class="d">28</div><div class="d">29</div><div class="d">30</div><div class="d">31</div>
+        </div>
+
+        <p class="cal-message">Не пропустите важное событие этого лета — день нашей свадьбы!</p>
+      </div>
+
+      <div class="big-date-wrap reveal">
+        <div class="big-date">11 / 07 / 26</div>
+      </div>
+    </section>
+
+    <!-- ===== COUNTDOWN ===== -->
+    <section class="countdown-section reveal">
+      <p class="countdown-label">До свадьбы осталось</p>
+      <div class="countdown" id="countdown">
+        <div class="cd-item"><span class="cd-num" id="cd-days">00</span><span class="cd-unit">дней</span></div>
+        <span class="cd-colon">:</span>
+        <div class="cd-item"><span class="cd-num" id="cd-hours">00</span><span class="cd-unit">часов</span></div>
+        <span class="cd-colon">:</span>
+        <div class="cd-item"><span class="cd-num" id="cd-mins">00</span><span class="cd-unit">минут</span></div>
+        <span class="cd-colon">:</span>
+        <div class="cd-item"><span class="cd-num" id="cd-secs">00</span><span class="cd-unit">секунд</span></div>
+      </div>
+    </section>
+
+    <!-- ===== LOCATION ===== -->
+    <section class="location-section" id="location">
+      <div class="section-tag reveal">ЛОКАЦИЯ</div>
+
+      <div class="loc-card reveal">
+        <div class="loc-img-wrap">
+          <img src="Место проведения.png" alt="Лермонтовская частная баня" class="loc-photo" />
+        </div>
+        <div class="loc-detail">
+          <p class="loc-type">МЕСТО ТОРЖЕСТВА</p>
+          <p class="loc-name">Лермонтовская частная баня</p>
+          <p class="loc-addr">Лермонтово, Калининградская обл., 238034</p>
+          <a class="map-btn" href="https://www.google.com/maps/place/Лермонтовская+частная+баня,+Лермонтово,+Калининградская+обл.,+238034/" target="_blank" rel="noopener">посмотреть на карте</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TIMING ===== -->
+    <section class="timing-section" id="timing">
+      <h2 class="timing-title reveal">ТАЙМИНГ</h2>
+      <div class="timeline">
+        
+        <div class="tl-item reveal">
+          <div class="tl-icon">
+            <img src="https://static.tildacdn.com/tild3738-6363-4530-a338-336536326436/photo.png" data-original="https://static.tildacdn.com/tild3738-6363-4530-a338-336536326436/photo.png" class="tl-img" alt="Регистрация" />
+          </div>
+          <div class="tl-time">12:30</div>
+          <p class="tl-label">РЕГИСТРАЦИЯ БРАКА</p>
+        </div>
+
+        <div class="tl-item reveal">
+          <div class="tl-icon">
+            <img src="https://static.tildacdn.com/tild3965-6266-4365-a336-376562613538/photo.png" data-original="https://static.tildacdn.com/tild3965-6266-4365-a336-376562613538/photo.png" class="tl-img" alt="Фуршет" />
+          </div>
+          <div class="tl-time">16:00</div>
+          <p class="tl-label">ФУРШЕТНЫЙ СТОЛ</p>
+        </div>
+
+        <div class="tl-item reveal">
+          <div class="tl-icon">
+            <img src="https://static.tildacdn.com/tild6238-3535-4334-a534-303166623634/photo.png" data-original="https://static.tildacdn.com/tild6238-3535-4334-a534-303166623634/photo.png" class="tl-img" alt="Банкет" />
+          </div>
+          <div class="tl-time">17:00</div>
+          <p class="tl-label">БАНКЕТ</p>
+        </div>
+
+        <div class="tl-item reveal tl-finale">
+          <div class="tl-icon">
+            <img src="https://static.tildacdn.com/tild3436-3739-4765-b437-313136376430/Frame_1321316941.png" data-original="https://static.tildacdn.com/tild3436-3739-4765-b437-313136376430/Frame_1321316941.png" class="tl-img" alt="Окончание вечера" />
+          </div>
+          <div class="tl-time">00:00</div>
+          <p class="tl-label">ОКОНЧАНИЕ ВЕЧЕРА</p>
+          <p class="tl-note">праздничный салют</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== DRESS CODE ===== -->
+    <section class="dresscode-section" id="dresscode">
+      <p class="dc-cursive reveal">Color wedding</p>
+      <div class="section-tag reveal">ДРЕСС-КОД</div>
+      <p class="dc-text reveal">Будем рады вас видеть в красивых нарядах<br>в палитре нашей свадьбы</p>
+
+      <div class="dc-swatches reveal">
+        <div class="swatch" style="background:#E8DBC8;" title="Шампань"></div>
+        <div class="swatch" style="background:#D4B896;" title="Бежевый"></div>
+        <div class="swatch" style="background:#E8C4C0;" title="Пудровый"></div>
+        <div class="swatch" style="background:#8B6914;" title="Шоколад"></div>
+        <div class="swatch" style="background:#9EAD80;" title="Оливковый"></div>
+        <div class="swatch" style="background:#5E7A40;" title="Зелёный"></div>
+        <div class="swatch" style="background:#3D5A28;" title="Тёмно-зелёный"></div>
+      </div>
+
+      <!-- Dress code reference image -->
+      <div class="dc-reference reveal">
+        <img src="дресс код.jpg" alt="Примеры нарядов" class="dc-ref-img" />
+      </div>
+    </section>
+
+    <!-- ===== WISHES ===== -->
+    <section class="wishes-section" id="wishes">
+      <div class="section-tag reveal">ПОЖЕЛАНИЯ</div>
+      <div class="wishes-static reveal">
+        <p class="ws-text">Мы просим вас не дарить нам цветы,<br>так как мы не успеем насладиться их красотой на все 100%.</p>
+        <p class="ws-text">Вместо цветов мы будем признательны,<br>если вы подарите бутылку вашего любимого алкоголя.</p>
+        <p class="ws-text">Также мы будем очень благодарны,<br>если вы поможете нам осуществить мечту о путешествии,<br>подарив ваши пожелания в конверте.</p>
+      </div>
+    </section>
+
+
+    <!-- ===== RSVP ===== -->
+    <section class="rsvp-section" id="rsvp">
+      <div class="section-tag reveal">АНКЕТА ГОСТЯ</div>
+      <p class="rsvp-intro reveal">Пожалуйста, заполните до <strong>20 июня 2026</strong></p>
+
+      <form class="rsvp-form reveal" id="rsvpForm" onsubmit="handleSubmit(event)">
+        <div class="fg">
+          <label class="fl" for="guestName">Ваше имя и фамилия</label>
+          <input class="fi" type="text" id="guestName" name="guestName" placeholder="Иван Петров" required />
+        </div>
+
+        <div class="fg">
+          <label class="fl">Ваше присутствие</label>
+          <div class="radio-group">
+            <label class="rl">
+              <input type="radio" name="attendance" value="yes" required />
+              <span class="rc"></span>
+              Обязательно приду 🎉
+            </label>
+            <label class="rl">
+              <input type="radio" name="attendance" value="no" />
+              <span class="rc"></span>
+              К сожалению, не смогу 😔
+            </label>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Предпочтения в напитках</label>
+          <div class="check-group">
+            <label class="cl"><input type="checkbox" name="drinks" value="wine" /><span class="cc"></span>Вино</label>
+            <label class="cl"><input type="checkbox" name="drinks" value="sparkling" /><span class="cc"></span>Игристое</label>
+            <label class="cl"><input type="checkbox" name="drinks" value="vodka" /><span class="cc"></span>Водка</label>
+            <label class="cl"><input type="checkbox" name="drinks" value="whiskey" /><span class="cc"></span>Виски</label>
+            <label class="cl"><input type="checkbox" name="drinks" value="cognac" /><span class="cc"></span>Коньяк</label>
+            <label class="cl"><input type="checkbox" name="drinks" value="soft" /><span class="cc"></span>Безалкогольные</label>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl" for="music">Какую музыку предпочитаете?</label>
+          <input class="fi" type="text" id="music" name="music" placeholder="Валерий Меладзе" />
+        </div>
+
+        <button class="submit-btn" type="submit" id="submitBtn">Отправить</button>
+      </form>
+
+      <div class="rsvp-success" id="rsvpSuccess">
+        <div class="success-emoji">🎊</div>
+        <p>Спасибо! Ваши ответы получены.<br>Мы очень ждём встречи с вами!</p>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+      <p class="footer-love">С любовью,</p>
+      <p class="footer-names">Диана &amp; Виктор</p>
+    </footer>
+    
+    <!-- Music control -->
+    <button class="music-toggle" id="musicToggle" aria-label="Toggle music">
+      <span class="icon-play">🎵</span>
+    </button>
+
+  </div><!-- /main-content -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/ScrollTrigger.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
