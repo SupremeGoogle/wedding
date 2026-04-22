@@ -1399,12 +1399,13 @@ input, button, textarea, select, label {
     border-left-width: 120px;
     border-right-width: 120px;
     border-top-width: 80px;
-    top: -20px;
+    top: -45px; /* Raised significantly */
   }
   .env-flap-back {
     border-left-width: 120px;
     border-right-width: 120px;
     border-bottom-width: 80px;
+    bottom: -15px; /* Raised slightly from the bottom */
   }
   .wax-seal {
     width: 42px;
