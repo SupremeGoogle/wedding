@@ -1359,64 +1359,64 @@ input, button, textarea, select, label {
 }
 
 @media (max-width: 480px) {
-  .rsvp-form { padding: 32px 20px; }
-  .fi { font-size: 1.1rem; padding: 14px 4px; }
-  .fl { font-size: 0.75rem; }
-  .rl, .cl { font-size: 1.05rem; }
+  .rsvp-form { padding: 24px 16px; }
+  .fi { font-size: 1rem; padding: 12px 2px; }
+  .fl { font-size: 0.7rem; }
+  .rl, .cl { font-size: 0.95rem; }
   
-  /* Dual Polaroids in one row */
+  /* Dual Polaroids in one row - even smaller */
   .msg-polaroids {
-    gap: 12px;
+    gap: 8px;
     flex-wrap: nowrap;
-    padding: 0 10px;
+    padding: 0 5px;
+    margin-bottom: 12px;
   }
   .msg-polaroids .polaroid {
-    max-width: 160px;
-    flex: 1;
+    max-width: 140px;
+    padding: 8px 8px 12px;
   }
   .msg-polaroids .polaroid-img {
-    width: 100%;
-    height: 140px;
+    height: 110px;
   }
   .msg-polaroids .polaroid-caption {
-    font-size: 0.9rem !important;
-    white-space: nowrap;
+    font-size: 0.75rem !important;
+    margin-top: 6px;
   }
 
-  .name-cap { font-size: clamp(2.8rem, 16vw, 4rem); }
-  .name-tail { font-size: clamp(1.1rem, 7vw, 1.8rem); }
-  .hero-names { gap: 8px; }
+  /* Hero names even smaller */
+  .name-cap { font-size: clamp(2.4rem, 14vw, 3.2rem); }
+  .name-tail { font-size: clamp(0.9rem, 6vw, 1.4rem); }
+  .hero-names { gap: 4px; }
   
-  /* Text reductions */
-  .message-text { font-size: 1.2rem; margin-bottom: 20px; }
-  .rsvp-intro { font-size: 1.2rem; }
+  /* Text reductions - even more aggressive */
+  .message-text { font-size: 1rem; margin-bottom: 15px; }
+  .rsvp-intro { font-size: 1rem; margin-bottom: 15px; }
+  .section-tag { font-size: 0.6rem; margin-bottom: 15px; }
   
-  /* Envelope Fixes */
-  .envelope-body { width: min(260px, 85vw); height: 180px; }
+  /* Envelope Fixes - even smaller */
+  .envelope-body { width: min(240px, 80vw); height: 160px; }
   .env-flap-front {
-    border-left-width: 130px;
-    border-right-width: 130px;
-    border-top-width: 90px;
-    top: -25px; /* Adjusting height for mobile scale */
+    border-left-width: 120px;
+    border-right-width: 120px;
+    border-top-width: 80px;
+    top: -20px;
   }
   .env-flap-back {
-    border-left-width: 130px;
-    border-right-width: 130px;
-    border-bottom-width: 90px;
+    border-left-width: 120px;
+    border-right-width: 120px;
+    border-bottom-width: 80px;
   }
   .wax-seal {
-    width: 50px;
-    height: 50px;
-    top: 45px;
-    font-size: 0.7rem;
+    width: 42px;
+    height: 42px;
+    top: 38px;
+    font-size: 0.6rem;
   }
 
-  .cd-colon { font-size: 1.8rem; }
-  .cd-item { min-width: 56px; }
-  .cd-num { font-size: clamp(2.2rem, 13vw, 3.5rem); }
-  .timeline::before { left: 30px; }
-  .tl-item { grid-template-columns: 60px auto 1fr; }
-  .tl-time { font-size: 1.1rem; padding-right: 16px; }
-  .tl-body { padding-left: 16px; }
-  .section-tag { font-size: 0.65rem; letter-spacing: 0.2em; }
+  .cd-colon { font-size: 1.5rem; }
+  .cd-item { min-width: 48px; }
+  .cd-num { font-size: 2.2rem; }
+  .timeline::before { left: 20px; }
+  .tl-item { grid-template-columns: 50px auto 1fr; }
+  .tl-time { font-size: 0.95rem; }
 }
