@@ -109,14 +109,14 @@ input, button, textarea, select, label {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 35%, rgba(255, 255, 255, 0) 75%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.88) 38%, rgba(255, 255, 255, 0) 78%);
   opacity: 0;
   z-index: 20;
   pointer-events: none;
 }
 
 .cover.flash-end::after {
-  animation: envelopeFlash 0.42s ease-out;
+  animation: envelopeFlash 0.62s ease-out;
 }
 
 @keyframes envelopeFlash {

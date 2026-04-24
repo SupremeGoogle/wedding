@@ -70,7 +70,7 @@
     flashTriggered = false;
     if (cover) cover.classList.remove('flash-end');
     coverVideo.currentTime = 0;
-    coverVideo.playbackRate = 1.5;
+    coverVideo.playbackRate = 1.6;
     coverVideo.onended = revealSite;
 
     function tryPlay() {
