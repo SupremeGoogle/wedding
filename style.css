@@ -109,20 +109,39 @@ input, button, textarea, select, label {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.88) 38%, rgba(255, 255, 255, 0) 78%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 32%, rgba(255, 255, 255, 0.42) 62%, rgba(255, 255, 255, 0) 84%);
   opacity: 0;
   z-index: 20;
   pointer-events: none;
+  transform: scale(0.98);
+  filter: blur(0px);
 }
 
 .cover.flash-end::after {
-  animation: envelopeFlash 0.62s ease-out;
+  animation: envelopeFlash 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes envelopeFlash {
-  0% { opacity: 0; }
-  25% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+    filter: blur(1px);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1.015);
+    filter: blur(0px);
+  }
+  58% {
+    opacity: 0.45;
+    transform: scale(1.03);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.045);
+    filter: blur(2px);
+  }
 }
 
 .cover.is-open { opacity: 0; visibility: hidden; pointer-events: none; }

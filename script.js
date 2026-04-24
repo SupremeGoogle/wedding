@@ -41,7 +41,7 @@
       if (!introStarted || flashTriggered) return;
       if (!coverVideo.duration || !isFinite(coverVideo.duration)) return;
       var timeLeft = coverVideo.duration - coverVideo.currentTime;
-      if (timeLeft <= 0.45) {
+      if (timeLeft <= 0.7) {
         flashTriggered = true;
         if (cover) cover.classList.add('flash-end');
       }
