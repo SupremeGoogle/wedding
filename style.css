@@ -420,8 +420,10 @@ input, button, textarea, select, label {
 }
 
 .hero-rhyme {
-  font-family: var(--script);
-  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  font-style: italic;
+  letter-spacing: 0.02em;
   color: var(--brown);
   margin-bottom: 44px;
 }
@@ -1348,6 +1350,16 @@ input, button, textarea, select, label {
   /* Hero adjustment for tablet */
   .name-cap { font-size: clamp(2rem, 8vw, 4rem); line-height: 1.1; }
   .name-tail { font-size: clamp(1.4rem, 6vw, 2.5rem); }
+
+  .msg-polaroids {
+    gap: 14px;
+    padding: 0 8px;
+  }
+  .msg-polaroids .polaroid {
+    flex: 1 1 calc(50% - 7px);
+    max-width: min(45vw, 250px);
+    padding: 12px 12px 20px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1369,24 +1381,35 @@ input, button, textarea, select, label {
   .fl { font-size: 0.7rem; }
   .rl, .cl { font-size: 0.95rem; }
   
-  /* Dual Polaroids in one row - even smaller */
-  .msg-polaroids, .hero-section .polaroids {
-    gap: 8px;
+  /* Dual Polaroids in one row - compact but readable */
+  .msg-polaroids, .polaroids {
+    gap: 10px;
     flex-wrap: nowrap;
-    padding: 0 5px;
+    padding: 0 6px;
     margin-bottom: 12px;
   }
-  .msg-polaroids .polaroid, .hero-section .polaroid {
-    max-width: 140px;
-    padding: 8px 8px 12px;
+  .msg-polaroids .polaroid {
+    flex: 1 1 calc(50% - 5px);
+    max-width: min(46vw, 210px);
+    padding: 10px 10px 16px;
   }
-  .msg-polaroids .polaroid-img, .hero-section .polaroid-img {
+  .msg-polaroids .polaroid-img {
     width: 100%;
-    height: 110px;
+    height: auto;
+    aspect-ratio: 1 / 1;
   }
-  .msg-polaroids .polaroid-caption, .hero-section .polaroid-caption {
-    font-size: 0.75rem !important;
+  .hero .polaroid-caption {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    margin-top: 8px;
+  }
+  .msg-polaroids .polaroid-caption {
+    font-size: 0.9rem !important;
     margin-top: 6px;
+  }
+
+  .hero-rhyme {
+    font-size: clamp(1.85rem, 7vw, 2.25rem);
   }
 
   /* Hero names even smaller */
