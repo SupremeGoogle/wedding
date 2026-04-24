@@ -111,6 +111,7 @@ input, button, textarea, select, label {
   inset: 0;
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 35%, rgba(255, 255, 255, 0) 75%);
   opacity: 0;
+  z-index: 20;
   pointer-events: none;
 }
 
@@ -229,6 +230,19 @@ input, button, textarea, select, label {
   color: var(--brown);
   letter-spacing: 0.05em;
   animation: hintPulse 2s ease-in-out infinite;
+}
+
+.cover-status {
+  min-height: 1.2em;
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--brown);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cover-status.visible {
+  opacity: 1;
 }
 @keyframes hintPulse {
   0%,100% { opacity: 0.6; }

@@ -9,13 +9,34 @@
   const cover       = document.getElementById('cover');
   const mainContent = document.getElementById('mainContent');
   const coverVideo  = document.getElementById('coverVideo');
+  const coverHint   = document.getElementById('coverHint');
+  const coverStatus = document.getElementById('coverStatus');
   var siteOpened    = false;
   var introStarted  = false;
   var flashTriggered = false;
 
+  function setCoverStatus(text) {
+    if (!coverStatus) return;
+    coverStatus.textContent = text || '';
+    coverStatus.classList.toggle('visible', !!text);
+  }
+
   if (coverVideo) {
     coverVideo.pause();
     coverVideo.currentTime = 0;
+    coverVideo.load();
+    coverVideo.addEventListener('waiting', function() {
+      if (introStarted && !siteOpened) setCoverStatus('Загружаем видео...');
+    });
+    coverVideo.addEventListener('stalled', function() {
+      if (introStarted && !siteOpened) setCoverStatus('Слабый интернет, подождите...');
+    });
+    coverVideo.addEventListener('playing', function() {
+      setCoverStatus('');
+    });
+    coverVideo.addEventListener('canplay', function() {
+      if (!introStarted) setCoverStatus('');
+    });
     coverVideo.addEventListener('timeupdate', function() {
       if (!introStarted || flashTriggered) return;
       if (!coverVideo.duration || !isFinite(coverVideo.duration)) return;
@@ -44,16 +65,46 @@
       return;
     }
 
+    if (coverHint) coverHint.style.opacity = '0';
+    setCoverStatus('Загружаем видео...');
     flashTriggered = false;
     if (cover) cover.classList.remove('flash-end');
     coverVideo.currentTime = 0;
+    coverVideo.playbackRate = 1.5;
     coverVideo.onended = revealSite;
 
-    coverVideo.play().then(function() {
-    }).catch(function(err) {
-      console.warn('Не удалось воспроизвести видео заставки:', err);
-      revealSite();
-    });
+    function tryPlay() {
+      coverVideo.play().then(function() {
+      }).catch(function(err) {
+        console.warn('Не удалось воспроизвести видео заставки:', err);
+        revealSite();
+      });
+    }
+
+    if (coverVideo.readyState >= 2) {
+      tryPlay();
+      return;
+    }
+
+    var started = false;
+    function startOnce() {
+      if (started) return;
+      started = true;
+      coverVideo.removeEventListener('canplay', startOnce);
+      coverVideo.removeEventListener('loadeddata', startOnce);
+      tryPlay();
+    }
+
+    coverVideo.addEventListener('canplay', startOnce);
+    coverVideo.addEventListener('loadeddata', startOnce);
+    coverVideo.load();
+
+    setTimeout(function() {
+      if (!started && !siteOpened) {
+        setCoverStatus('Слабый интернет, пробуем запустить...');
+        startOnce();
+      }
+    }, 3000);
   }
 
   function revealSite() {
@@ -61,6 +112,7 @@
     siteOpened = true;
 
     cover.classList.add('is-open');
+    setCoverStatus('');
     document.body.style.overflow = '';
     if (mainContent) {
       mainContent.classList.add('visible');
