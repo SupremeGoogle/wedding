@@ -8,6 +8,24 @@
   /* ---------- ENVELOPE OPEN ---------- */
   const cover       = document.getElementById('cover');
   const mainContent = document.getElementById('mainContent');
+  const coverVideo  = document.getElementById('coverVideo');
+  var siteOpened    = false;
+  var introStarted  = false;
+  var flashTriggered = false;
+
+  if (coverVideo) {
+    coverVideo.pause();
+    coverVideo.currentTime = 0;
+    coverVideo.addEventListener('timeupdate', function() {
+      if (!introStarted || flashTriggered) return;
+      if (!coverVideo.duration || !isFinite(coverVideo.duration)) return;
+      var timeLeft = coverVideo.duration - coverVideo.currentTime;
+      if (timeLeft <= 0.45) {
+        flashTriggered = true;
+        if (cover) cover.classList.add('flash-end');
+      }
+    });
+  }
 
   if (cover) {
     cover.addEventListener('click', openEnvelope);
@@ -18,38 +36,53 @@
   }
 
   function openEnvelope() {
-    if (cover.classList.contains('opening') || cover.classList.contains('is-open')) return;
+    if (cover.classList.contains('is-open') || siteOpened || introStarted) return;
+    introStarted = true;
 
-    cover.classList.add('opening');
+    if (!coverVideo) {
+      revealSite();
+      return;
+    }
 
-    // Start music
-    const music = document.getElementById('weddingMusic');
+    flashTriggered = false;
+    if (cover) cover.classList.remove('flash-end');
+    coverVideo.currentTime = 0;
+    coverVideo.onended = revealSite;
+
+    coverVideo.play().then(function() {
+    }).catch(function(err) {
+      console.warn('Не удалось воспроизвести видео заставки:', err);
+      revealSite();
+    });
+  }
+
+  function revealSite() {
+    if (siteOpened) return;
+    siteOpened = true;
+
+    cover.classList.add('is-open');
+    document.body.style.overflow = '';
+    if (mainContent) {
+      mainContent.classList.add('visible');
+    }
+
+    var music = document.getElementById('weddingMusic');
     if (music) {
       music.volume = 0.2;
       music.play().catch(function(e) {
-        console.warn("Autoplay was prevented or audio failed:", e);
+        console.warn('Autoplay was prevented or audio failed:', e);
       });
     }
 
+    var musicToggle = document.getElementById('musicToggle');
+    if (musicToggle) {
+      musicToggle.classList.add('visible', 'playing');
+    }
+
     setTimeout(function() {
-      cover.classList.add('is-open');
-      document.body.style.overflow = '';
-      if (mainContent) {
-        mainContent.classList.add('visible');
-      }
-
-      // Show music toggle
-      const musicToggle = document.getElementById('musicToggle');
-      if (musicToggle) {
-        musicToggle.classList.add('visible', 'playing');
-      }
-
-      // Trigger hero animations
-      setTimeout(function() {
-        var heroItems = document.querySelectorAll('.fade-in-hero');
-        heroItems.forEach(function(el) { el.classList.add('show'); });
-      }, 200);
-    }, 1200);
+      var heroItems = document.querySelectorAll('.fade-in-hero');
+      heroItems.forEach(function(el) { el.classList.add('show'); });
+    }, 200);
   }
 
   /* ---------- MUSIC TOGGLE ---------- */

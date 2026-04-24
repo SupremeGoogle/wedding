@@ -5,7 +5,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --cream:      #FDFBF7;
+  --cream:      #f8f1ea;
   --paper:      #F7F3EE;
   --beige:      #E8DBC8;
   --taupe:      #BFAF9F;
@@ -30,7 +30,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--cream);
+  background: #f8f1ea;
   color: var(--deep);
   font-family: var(--serif); /* Use serif globally */
   overflow-x: hidden;
@@ -97,16 +97,42 @@ input, button, textarea, select, label {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: linear-gradient(145deg, #F5EDE3 0%, #EDE0D0 50%, #E4D0C0 100%);
+  background: #f8f1ea;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: opacity 0.6s ease, visibility 0.6s ease;
 }
+
+.cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 35%, rgba(255, 255, 255, 0) 75%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cover.flash-end::after {
+  animation: envelopeFlash 0.42s ease-out;
+}
+
+@keyframes envelopeFlash {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 .cover.is-open { opacity: 0; visibility: hidden; pointer-events: none; }
 
-.cover-inner { text-align: center; }
+.cover-inner {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
 
 .envelope-wrap {
   position: relative;
@@ -119,143 +145,60 @@ input, button, textarea, select, label {
 .envelope-body {
   position: relative;
   width: min(440px, 92vw);
-  height: 380px;
+  /* The image will now dictate the height naturally */
 }
 
-/* envelope bottom half */
-.env-bottom {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 230px;
-  background: linear-gradient(170deg, #EDD8C5 0%, #DFC5AD 100%);
-  border-radius: 0 0 20px 20px;
-  box-shadow: 0 24px 72px rgba(61,43,39,0.25);
-  z-index: 4;
-}
-
-/* left/right envelope triangles */
-.env-side {
-  position: absolute;
-  bottom: 0;
-  width: 0; height: 0;
+.envelope-img {
+  width: 100%; 
+  height: auto;
+  display: block;
   z-index: 2;
-}
-.env-side-left {
-  left: 0;
-  border-left: calc(min(440px, 92vw) / 2) solid #D4B898;
-  border-top: 115px solid transparent;
-  border-bottom: 115px solid transparent;
-  border-radius: 0 0 0 20px;
-}
-.env-side-right {
-  right: 0;
-  border-right: calc(min(440px, 92vw) / 2) solid #C8AC88;
-  border-top: 115px solid transparent;
-  border-bottom: 115px solid transparent;
-  border-radius: 0 20px 0 0;
+  pointer-events: none;
 }
 
-/* flap back (behind card) */
-.env-flap-back {
-  position: absolute;
-  top: 30%; left: 0; right: 0;
-  height: 180px;
-  clip-path: polygon(0 0, 50% 85%, 100% 0);
-  background: linear-gradient(160deg, #E8D2BC 0%, #D8BEA4 100%);
-  transform-origin: top center;
-  z-index: 1;
-  border-radius: 20px 20px 0 0;
-}
-
-/* invitation card inside */
-.env-card {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 48px);
-  height: 180px;
-  background: #FDF9F5;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  z-index: 3;
-  box-shadow: 0 5px 24px rgba(61,43,39,0.12);
-  transition: transform 0.7s cubic-bezier(0.22,1,0.36,1), opacity 0.5s ease;
-}
-.env-card-title {
-  font-family: var(--body);
-  font-size: 0.6rem;
-  letter-spacing: 0.25em;
-  color: var(--taupe);
-  text-transform: uppercase;
-}
-.env-card-names {
-  font-family: var(--display);
-  font-size: 2.8rem;
-  color: var(--brown);
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.env-amp { color: var(--rose); font-size: 1.4rem; }
-.env-card-date {
-  font-family: var(--body);
-  font-size: 0.9rem;
-  letter-spacing: 0.15em;
-  color: var(--taupe);
-}
-
-/* flap front (animated) */
-.env-flap-front {
-  position: absolute;
-  top: 30%; left: 0; right: 0;
-  height: 260px;
-  clip-path: polygon(0 0, 50% 95%, 100% 0);
-  background: linear-gradient(160deg, #F0D8C4 0%, #E0C4A4 100%);
-  transform-origin: top center;
-  z-index: 10; /* Make sure it is on top of everything */
-  border-radius: 20px 20px 0 0;
-  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 60px;
-}
-
-.cover:hover .env-flap-front {
-  transform: rotateX(-10deg);
-  box-shadow: 0 -8px 20px rgba(61,43,39,0.08);
-}
-
-/* Wax seal */
-.wax-seal {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #C09085, #8A5550);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 16px rgba(61,43,39,0.3), inset 0 2px 4px rgba(255,255,255,0.15);
+.env-closed {
   position: relative;
-  flex-shrink: 0;
+  transition: opacity 1s ease;
 }
-.wax-seal::before {
-  content: '';
+
+.env-open {
   position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
+  top: 0; left: 0;
+  width: 100%; 
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 1s ease;
 }
-.seal-letter {
-  font-family: var(--script);
-  font-size: 1rem;
-  color: rgba(255,255,255,0.95);
+
+/* Seal button on envelope */
+.env-seal {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle at 35% 35%, #D4B898, #C8AC88);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(61,43,39,0.3), inset 0 2px 5px rgba(255,255,255,0.4);
+  z-index: 3;
+  color: #FFF;
+  font-family: var(--serif);
+  font-size: 1.8rem;
+  font-weight: 500;
   letter-spacing: 0.05em;
+  border: 1px solid rgba(255,255,255,0.6);
+  transition: transform 0.6s cubic-bezier(0.22,1,0.36,1), opacity 0.5s ease;
+  pointer-events: auto;
+}
+.env-seal-amp {
+  font-family: var(--script);
+  font-size: 1.6rem;
+  margin: 0 4px;
 }
 
 .hero-intro-text {
@@ -297,14 +240,26 @@ input, button, textarea, select, label {
   transform: scale(1.05);
   transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.cover.opening .env-flap-front {
-  transform: rotateX(-160deg);
-  transition-duration: 0.9s;
-}
-.cover.opening .env-card {
-  transform: translateX(-50%) translateY(-100px);
+.cover.opening .env-closed {
   opacity: 0;
-  transition-delay: 0.4s;
+}
+.cover.opening .env-open {
+  opacity: 1;
+}
+.cover.opening .env-seal {
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition-delay: 0.1s;
+}
+
+.cover-video {
+  display: block;
+  width: min(560px, 92vw);
+  max-height: 88vh;
+  border-radius: 0;
+  box-shadow: none;
+  background: #f8f1ea;
+  object-fit: contain;
 }
 
 /* ================================================================
@@ -444,7 +399,7 @@ input, button, textarea, select, label {
   gap: 28px;
   justify-content: center;
   margin-bottom: 32px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .polaroid {
   background: #FEFCF9;
@@ -452,6 +407,8 @@ input, button, textarea, select, label {
   box-shadow: 0 12px 48px rgba(61,43,39,0.22), 0 2px 12px rgba(61,43,39,0.12);
   border-radius: 2px;
   max-width: 300px;
+  flex: 1 1 0;
+  min-width: 0;
   cursor: default;
   transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s;
 }
@@ -460,8 +417,9 @@ input, button, textarea, select, label {
 .polaroid:hover { transform: rotate(0deg) scale(1.06) translateY(-6px); box-shadow: 0 20px 60px rgba(61,43,39,0.20); z-index: 5; }
 
 .polaroid-img {
-  width: 260px;
-  height: 260px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
   background: #f0f0f0;
   display: flex;
   align-items: center;
@@ -532,14 +490,15 @@ input, button, textarea, select, label {
   gap: 32px;
   justify-content: center;
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .msg-polaroids .polaroid {
   max-width: 320px;
 }
 .msg-polaroids .polaroid-img {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
 }
 .msg-pol-1 { transform: rotate(-3deg); }
 .msg-pol-2 { transform: rotate(2deg); }
@@ -1351,42 +1310,56 @@ input, button, textarea, select, label {
   .outfit-slider { width: 100%; }
   .wishes-slider { width: 100%; }
   .phone-mockup { width: 200px; }
-  .envelope-body { width: min(300px, 88vw); height: 210px; }
+  .envelope-body { width: min(600px, 95vw); }
   
   /* Hero adjustment for tablet */
-  .name-cap { font-size: clamp(3.5rem, 15vw, 6rem); }
+  .name-cap { font-size: clamp(2rem, 8vw, 4rem); line-height: 1.1; }
   .name-tail { font-size: clamp(1.4rem, 6vw, 2.5rem); }
 }
 
 @media (max-width: 480px) {
+  .calendar-section { padding: 70px 14px; gap: 24px; }
+  .cal-card {
+    width: min(360px, 100%);
+    padding: 34px 18px;
+    border-radius: 28px;
+    margin-bottom: 34px;
+  }
+  .cal-title { font-size: 2.4rem; margin-bottom: 24px; }
+  .cal-month { font-size: 1.5rem; margin-bottom: 20px; }
+  .cal-grid { gap: 8px 2px; }
+  .dn { font-size: 0.8rem; padding: 8px 0; }
+  .d { font-size: 1.12rem; padding: 8px 2px; }
+
   .rsvp-form { padding: 24px 16px; }
   .fi { font-size: 1rem; padding: 12px 2px; }
   .fl { font-size: 0.7rem; }
   .rl, .cl { font-size: 0.95rem; }
   
   /* Dual Polaroids in one row - even smaller */
-  .msg-polaroids {
+  .msg-polaroids, .hero-section .polaroids {
     gap: 8px;
     flex-wrap: nowrap;
     padding: 0 5px;
     margin-bottom: 12px;
   }
-  .msg-polaroids .polaroid {
+  .msg-polaroids .polaroid, .hero-section .polaroid {
     max-width: 140px;
     padding: 8px 8px 12px;
   }
-  .msg-polaroids .polaroid-img {
+  .msg-polaroids .polaroid-img, .hero-section .polaroid-img {
+    width: 100%;
     height: 110px;
   }
-  .msg-polaroids .polaroid-caption {
+  .msg-polaroids .polaroid-caption, .hero-section .polaroid-caption {
     font-size: 0.75rem !important;
     margin-top: 6px;
   }
 
   /* Hero names even smaller */
-  .name-cap { font-size: clamp(2.4rem, 14vw, 3.2rem); }
+  .name-cap { font-size: clamp(1.2rem, 7vw, 1.8rem); line-height: 1.1; }
   .name-tail { font-size: clamp(0.9rem, 6vw, 1.4rem); }
-  .hero-names { gap: 4px; }
+  .hero-names { gap: 8px; flex-direction: column; }
   
   /* Text reductions - even more aggressive */
   .message-text { font-size: 1rem; margin-bottom: 15px; }
@@ -1394,25 +1367,7 @@ input, button, textarea, select, label {
   .section-tag { font-size: 0.6rem; margin-bottom: 15px; }
   
   /* Envelope Fixes - even smaller */
-  .envelope-body { width: min(240px, 80vw); height: 160px; }
-  .env-flap-front {
-    border-left-width: 120px;
-    border-right-width: 120px;
-    border-top-width: 80px;
-    top: -45px; /* Raised significantly */
-  }
-  .env-flap-back {
-    border-left-width: 120px;
-    border-right-width: 120px;
-    border-bottom-width: 80px;
-    bottom: -15px; /* Raised slightly from the bottom */
-  }
-  .wax-seal {
-    width: 42px;
-    height: 42px;
-    top: 38px;
-    font-size: 0.6rem;
-  }
+  .envelope-body { width: min(400px, 95vw); }
 
   .cd-colon { font-size: 1.5rem; }
   .cd-item { min-width: 48px; }
