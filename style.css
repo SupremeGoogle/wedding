@@ -471,8 +471,10 @@ input, button, textarea, select, label {
 }
 .polaroid-placeholder { font-size: 4.5rem; }
 .polaroid-caption {
-  font-family: var(--script);
+  font-family: 'Playfair Display', serif;
   font-size: 0.78rem;
+  font-style: italic;
+  letter-spacing: 0.01em;
   color: var(--brown);
   line-height: 1.6;
   text-align: center;
@@ -751,11 +753,17 @@ input, button, textarea, select, label {
   margin-bottom: 8px;
 }
 .loc-name {
-  font-family: var(--display);
+  font-family: 'Playfair Display', serif;
   font-size: 1.55rem;
   font-style: italic;
   color: var(--brown);
   margin-bottom: 8px;
+}
+
+.location-section .section-tag,
+.dresscode-section .section-tag,
+.rsvp-section .section-tag {
+  font-size: 1.02rem;
 }
 .loc-addr {
   font-size: 0.88rem;
@@ -817,7 +825,7 @@ input, button, textarea, select, label {
 }
 .tl-time {
   font-family: var(--serif);
-  font-size: 1.2rem;
+  font-size: 2.4rem;
   font-style: italic;
   font-weight: 500;
   color: var(--brown);
@@ -855,7 +863,7 @@ input, button, textarea, select, label {
   color: var(--brown);
   margin-top: 5px;
 }
-.tl-finale .tl-time { color: var(--gold); }
+.tl-finale .tl-time { color: var(--brown); }
 .tl-finale .tl-icon { }
 
 /* ================================================================
@@ -1421,6 +1429,9 @@ input, button, textarea, select, label {
   .message-text { font-size: 1rem; margin-bottom: 15px; }
   .rsvp-intro { font-size: 1rem; margin-bottom: 15px; }
   .section-tag { font-size: 0.6rem; margin-bottom: 15px; }
+  .location-section .section-tag,
+  .dresscode-section .section-tag,
+  .rsvp-section .section-tag { font-size: 0.72rem; }
   
   /* Envelope Fixes - even smaller */
   .envelope-body { width: min(400px, 95vw); }
@@ -1430,5 +1441,5 @@ input, button, textarea, select, label {
   .cd-num { font-size: 2.2rem; }
   .timeline::before { left: 20px; }
   .tl-item { grid-template-columns: 50px auto 1fr; }
-  .tl-time { font-size: 0.95rem; }
+  .tl-time { font-size: 1.9rem; }
 }
