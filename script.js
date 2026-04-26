@@ -572,6 +572,7 @@
     if (!questContent) return;
 
     var isChampagne = stage.type === 'champagne';
+    var isFinalBouquetStage = !isChampagne && questState.stageIndex === QUEST_STAGES.length - 1;
     var hitsKey = isChampagne ? 'champagneHits' : 'bouquetHits';
     var pointsKey = isChampagne ? 'champagnePoints' : 'bouquetPoints';
     var emoji = isChampagne ? '🥂' : '💐';
@@ -625,6 +626,17 @@
         questState[pointsKey] = isChampagne
           ? calcChampagnePoints(questState[hitsKey])
           : calcBouquetPoints(questState[hitsKey]);
+
+        if (isFinalBouquetStage) {
+          questContent.innerHTML = '' +
+            '<div class="quest-card">' +
+            '  <p class="quest-question">Время вышло! ' + hitsLabel + ': ' + questState[hitsKey] + '.</p>' +
+            '  <p class="quest-note">Бонус за этап: <strong>' + questState[pointsKey] + '</strong> балл(ов).</p>' +
+            '</div>';
+          window.setTimeout(finishQuest, 600);
+          return;
+        }
+
         questContent.innerHTML = '' +
           '<div class="quest-card">' +
           '  <p class="quest-question">Время вышло! ' + hitsLabel + ': ' + questState[hitsKey] + '.</p>' +
