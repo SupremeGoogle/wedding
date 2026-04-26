@@ -719,10 +719,7 @@
       '  <p class="quest-note">Бонус за букет: <strong>' + questState.bouquetPoints + ' балл(ов)</strong></p>' +
       '  <p class="quest-note">Время: <strong>' + formatMs(timeMs) + '</strong></p>' +
       '  <p class="quest-note">Итог: <strong>' + totalScore + ' очков</strong></p>' +
-      '  <div class="quest-actions" style="margin-top:12px;"><button class="quest-btn primary" id="questRestart">Сыграть еще</button></div>' +
       '</div>';
-    var restart = document.getElementById('questRestart');
-    if (restart) restart.addEventListener('click', renderQuestStartCard);
   }
 
   function finishQuest() {
