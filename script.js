@@ -17,6 +17,7 @@
   const questCharacter = document.getElementById('questCharacter');
   const questTimer  = document.getElementById('questTimer');
   const questLeaderboard = document.getElementById('questLeaderboard');
+  const questBoard = document.getElementById('questBoard');
   const API_URL     = (window.WEDDING_API_URL || '').trim();
   const PAGE_PARAMS = new URLSearchParams(window.location.search);
   const GAME_MODE = PAGE_PARAMS.get('mode') === 'game';
@@ -285,6 +286,7 @@
 
   function renderQuestStartCard() {
     if (!questContent) return;
+    if (questBoard) questBoard.classList.add('is-hidden');
     setQuestCharacter('Жених1.png');
     typeSpeech('Привет! Я жених, и мне нужна твоя помощь. Подскажи путь к невесте, пожалуйста.');
     questContent.innerHTML = '' +
@@ -301,12 +303,13 @@
       setTimeout(function() { input.focus(); }, 180);
     }
     if (startBtn) {
-      startBtn.addEventListener('click', function() {
+      startBtn.addEventListener('click', async function() {
         var name = (input && input.value ? input.value : '').trim();
         if (!name) {
           if (input) input.focus();
           return;
         }
+        await migrateLocalResponsesOnce();
         questState.playerName = name;
         questState.playerId = getClientId();
         questState.sessionId = 'quiz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
@@ -319,6 +322,17 @@
         runQuestNextStage();
       });
     }
+  }
+
+  function renderDialogueContinue(speechText, onContinue, buttonText) {
+    typeSpeech(speechText);
+    questContent.innerHTML = '' +
+      '<div class="quest-card">' +
+      '  <p class="quest-note">Когда будешь готов(а), продолжим.</p>' +
+      '  <div class="quest-actions"><button class="quest-btn primary" id="questContinueBtn">' + (buttonText || 'Продолжить') + '</button></div>' +
+      '</div>';
+    var btn = document.getElementById('questContinueBtn');
+    if (btn) btn.addEventListener('click', onContinue);
   }
 
   function runQuestNextStage() {
@@ -341,7 +355,13 @@
   function renderQuestionStage(stage) {
     if (!questContent) return;
     setQuestCharacter(stage.character);
-    typeSpeech(stage.speech);
+    renderDialogueContinue(stage.speech, function() {
+      renderQuestionCard(stage);
+    }, 'Перейти к вопросу');
+  }
+
+  function renderQuestionCard(stage) {
+    if (!questContent) return;
 
     var optionsHtml = stage.options.map(function(opt, idx) {
       return '<button class="quest-option" data-idx="' + idx + '">' + opt + '</button>';
@@ -379,9 +399,7 @@
       });
     });
 
-    if (nextBtn) {
-      nextBtn.addEventListener('click', runQuestNextStage);
-    }
+    if (nextBtn) nextBtn.addEventListener('click', runQuestNextStage);
   }
 
   function moveBouquet(btn, zone) {
@@ -404,7 +422,13 @@
   function renderBouquetStage(stage) {
     if (!questContent) return;
     setQuestCharacter(stage.character);
-    typeSpeech(stage.speech);
+    renderDialogueContinue(stage.speech, function() {
+      runBouquetStage(stage);
+    }, 'Ловить букет');
+  }
+
+  function runBouquetStage(stage) {
+    if (!questContent) return;
 
     var left = stage.duration;
     questContent.innerHTML = '' +
@@ -511,6 +535,8 @@
       finishedAt: new Date().toISOString()
     };
 
+    if (questBoard) questBoard.classList.remove('is-hidden');
+
     submitQuestResult(result).then(loadQuestLeaderboard);
 
     if (questContent) {
@@ -530,10 +556,18 @@
 
   function initQuestGame() {
     if (!questGame) return;
+    if (GAME_MODE) {
+      document.body.classList.add('game-mode');
+    }
     renderQuestStartCard();
     loadQuestLeaderboard();
 
     if (GAME_MODE) {
+      var music = document.getElementById('weddingMusic');
+      if (music) {
+        music.pause();
+        music.currentTime = 0;
+      }
       setTimeout(function() {
         var sec = document.getElementById('quest');
         if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -651,7 +685,7 @@
     }
 
     var music = document.getElementById('weddingMusic');
-    if (music) {
+    if (music && !GAME_MODE) {
       music.volume = 0.2;
       music.play().catch(function(e) {
         console.warn('Autoplay was prevented or audio failed:', e);
@@ -659,7 +693,7 @@
     }
 
     var musicToggle = document.getElementById('musicToggle');
-    if (musicToggle) {
+    if (musicToggle && !GAME_MODE) {
       musicToggle.classList.add('visible', 'playing');
     }
 
@@ -674,6 +708,7 @@
   const weddingMusic = document.getElementById('weddingMusic');
   if (musicToggle && weddingMusic) {
     musicToggle.addEventListener('click', function() {
+      if (GAME_MODE) return;
       if (weddingMusic.paused) {
         weddingMusic.play();
         musicToggle.classList.add('playing');
@@ -687,7 +722,9 @@
   }
 
   // Block scroll while envelope is visible
-  document.body.style.overflow = 'hidden';
+  if (!GAME_MODE) {
+    document.body.style.overflow = 'hidden';
+  }
 
   /* ---------- SCROLL REVEAL ---------- */
   function initReveals() {

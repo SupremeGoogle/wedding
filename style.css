@@ -1283,6 +1283,38 @@ input, button, textarea, select, label {
   position: relative;
   z-index: 1;
 }
+
+body.game-mode {
+  background: #f8f1ea;
+  overflow: hidden;
+}
+body.game-mode .music-toggle {
+  display: none !important;
+}
+body.game-mode .main-content {
+  opacity: 1;
+}
+body.game-mode .main-content > *:not(#quest) {
+  display: none !important;
+}
+body.game-mode #quest {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  padding: clamp(14px, 2.8vw, 26px);
+  overflow-y: auto;
+  gap: 16px;
+  z-index: 1200;
+}
+body.game-mode #quest .reveal,
+body.game-mode #quest .reveal-scale {
+  opacity: 1;
+  transform: none;
+}
 .quest-entry {
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(191, 175, 159, 0.4);
@@ -1466,6 +1498,9 @@ input, button, textarea, select, label {
   padding: 20px;
   text-align: left;
 }
+.quest-board.is-hidden {
+  display: none;
+}
 .quest-board-title {
   font-family: var(--serif);
   font-size: 1.7rem;
@@ -1585,8 +1620,8 @@ input, button, textarea, select, label {
   }
 
   .quest-game { padding: 22px 16px; }
-  .quest-character-wrap { grid-template-columns: 1fr; }
-  .quest-character { max-height: 220px; justify-self: center; }
+  .quest-character-wrap { grid-template-columns: 130px 1fr; }
+  .quest-character { max-height: 180px; justify-self: center; }
   .quest-options { grid-template-columns: 1fr; }
   .quest-row { grid-template-columns: 30px 1fr auto; }
 }
@@ -1598,7 +1633,9 @@ input, button, textarea, select, label {
   .quest-title { font-size: 1.45rem; }
   .quest-head { align-items: flex-start; flex-direction: column; }
   .quest-timer { font-size: 0.95rem; }
-  .quest-speech { font-size: 1.02rem; min-height: 92px; }
+  .quest-character-wrap { grid-template-columns: 102px 1fr; gap: 10px; }
+  .quest-character { max-height: 132px; }
+  .quest-speech { font-size: 0.98rem; min-height: 88px; padding: 12px 12px; }
   .quest-question { font-size: 1.12rem; }
   .quest-option, .quest-btn { font-size: 0.95rem; }
   .quest-bouquet-zone { height: 210px; }
