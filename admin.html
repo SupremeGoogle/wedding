@@ -84,6 +84,33 @@
     .actions { display: flex; gap: 16px; }
     .btn-clear { background: #fee2e2; color: #b91c1c; }
     .btn-export { background: var(--gold); }
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 130px;
+    }
+    .refresh-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.45);
+      border-top-color: #fff;
+      border-radius: 50%;
+      display: none;
+    }
+    .btn-refresh.is-loading {
+      opacity: 0.85;
+      cursor: wait;
+    }
+    .btn-refresh.is-loading .refresh-spinner {
+      display: inline-block;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -98,7 +125,7 @@
     <div class="header">
       <h2>Ответы гостей</h2>
       <div class="actions">
-        <button class="btn-export" onclick="refreshData()">Обновить</button>
+        <button class="btn-export btn-refresh" id="refreshBtn" onclick="refreshData()"><span class="refresh-spinner" aria-hidden="true"></span><span id="refreshBtnLabel">Обновить</span></button>
         <button class="btn-export" onclick="exportCSV()">Скачать CSV</button>
       </div>
     </div>
@@ -144,13 +171,21 @@
     let currentRows = [];
     let currentQuizRows = [];
 
+    function setRefreshLoading(isLoading) {
+      const btn = document.getElementById('refreshBtn');
+      const label = document.getElementById('refreshBtnLabel');
+      if (!btn || !label) return;
+      btn.disabled = !!isLoading;
+      btn.classList.toggle('is-loading', !!isLoading);
+      label.textContent = isLoading ? 'Обновление...' : 'Обновить';
+    }
+
     function checkPass() {
       const pass = document.getElementById('passInput').value;
       if (pass === '123!') {
         document.getElementById('loginBox').style.display = 'none';
         document.getElementById('adminContainer').style.display = 'flex';
-        loadRows();
-        loadQuizRows();
+        refreshData();
       } else {
         alert('Неверный пароль');
       }
@@ -281,9 +316,13 @@
       }
     }
 
-    function refreshData() {
-      loadRows();
-      loadQuizRows();
+    async function refreshData() {
+      setRefreshLoading(true);
+      try {
+        await Promise.all([loadRows(), loadQuizRows()]);
+      } finally {
+        setRefreshLoading(false);
+      }
     }
 
     function renderTable(rows) {
