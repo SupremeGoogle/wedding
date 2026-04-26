@@ -165,10 +165,26 @@
         .replace(/'/g, '&#39;');
     }
 
+    function isQuizFallbackRow(r) {
+      return r && r.attendance === 'QUIZ' && typeof r.music === 'string' && r.music.indexOf('__QUIZ__') === 0;
+    }
+
+    function parseQuizFallbackFromResponses(rows) {
+      const parsed = [];
+      (rows || []).forEach(r => {
+        if (!isQuizFallbackRow(r)) return;
+        try {
+          parsed.push(JSON.parse(r.music.slice('__QUIZ__'.length)));
+        } catch (e) {
+        }
+      });
+      return parsed;
+    }
+
     async function loadRows() {
       if (!API_URL) {
         const local = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
-        currentRows = local.map(r => ({
+        currentRows = local.filter(r => !isQuizFallbackRow(r)).map(r => ({
           responseId: String(r.id || ''),
           timestamp: r.timestamp || '',
           name: r.name || '',
@@ -187,7 +203,7 @@
           throw new Error('API_NON_JSON_OR_PRIVATE');
         }
         const data = await res.json();
-        currentRows = (data.responses || []).map(r => ({
+        currentRows = (data.responses || []).filter(r => !isQuizFallbackRow(r)).map(r => ({
           responseId: r.responseId || '',
           fingerprint: r.fingerprint || '',
           timestamp: r.timestamp || '',
@@ -200,7 +216,7 @@
       } catch (err) {
         console.error(err);
         const local = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
-        currentRows = local.map(r => ({
+        currentRows = local.filter(r => !isQuizFallbackRow(r)).map(r => ({
           responseId: String(r.id || ''),
           timestamp: r.timestamp || '',
           name: r.name || '',
@@ -233,7 +249,23 @@
           throw new Error('QUIZ_API_UNAVAILABLE');
         }
         const data = await res.json();
-        currentQuizRows = (data.results || []).map(r => ({
+        if (Array.isArray(data.results)) {
+          currentQuizRows = data.results.map(r => ({
+            sessionId: r.sessionId || '',
+            fingerprint: r.fingerprint || '',
+            playerName: r.playerName || '',
+            totalScore: Number(r.totalScore || 0),
+            timeMs: Number(r.timeMs || 0),
+            correctCount: Number(r.correctCount || 0),
+            bouquetHits: Number(r.bouquetHits || 0)
+          }));
+          renderQuizTable(currentQuizRows);
+          return;
+        }
+
+        const listRes = await fetch(API_URL + '?action=list', { method: 'GET' });
+        const listData = await listRes.json();
+        currentQuizRows = parseQuizFallbackFromResponses(listData.responses || []).map(r => ({
           sessionId: r.sessionId || '',
           fingerprint: r.fingerprint || '',
           playerName: r.playerName || '',

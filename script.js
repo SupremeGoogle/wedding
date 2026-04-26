@@ -178,7 +178,7 @@
     },
     {
       type: 'question',
-      character: 'Жених2.png',
+      character: 'Жених1.png',
       speech: 'Отлично, ты на верном пути! Следующая загадка приведет нас ближе.',
       question: 'Как расшифровывается ЗАГС?',
       options: ['Зона Активных Гостей Свадьбы', 'Зал Ароматов, Гостей и Смеха', 'Запись Актов Гражданского Состояния', 'Заявление о Активной Годовщине Свадьбы'],
@@ -186,7 +186,7 @@
     },
     {
       type: 'question',
-      character: 'Жених2.png',
+      character: 'Жених1.png',
       speech: 'Я начинаю верить, что мы успеем! Давай еще один шаг.',
       question: 'Кто сделал первый шаг?',
       options: ['Виктор', 'Диана'],
@@ -194,14 +194,14 @@
     },
     {
       type: 'champagne',
-      character: 'Жених2.png',
+      character: 'Жених1.png',
       speech: 'Смотри, шампанское! Нажимай на бокал как можно больше раз за 10 секунд.',
       duration: 10
     },
     {
       type: 'bouquet',
       miniGame: 'bouquet',
-      character: 'Невеста1.png',
+      character: 'Жених1.png',
       speech: 'Финальное испытание! Лови букет - он телепортируется, успей нажать как можно больше раз за 10 секунд.',
       duration: 10
     }
@@ -343,6 +343,40 @@
     questLeaderboard.innerHTML = rows.slice(0, 10).map(function(r, idx) {
       return '<div class="quest-row"><strong>' + (idx + 1) + '</strong><span>' + ((r && r.playerName) || 'Гость') + '</span><span>' + (Number((r && r.totalScore) || 0) || 0) + ' очков</span><span>' + formatMs(Number((r && r.timeMs) || 0)) + '</span></div>';
     }).join('');
+  }
+
+  function extractQuizFallbackRowsFromResponses(rows) {
+    var out = [];
+    (rows || []).forEach(function(r) {
+      if (!r || r.attendance !== 'QUIZ') return;
+      if (typeof r.music !== 'string' || r.music.indexOf('__QUIZ__') !== 0) return;
+      try {
+        var payload = JSON.parse(r.music.slice('__QUIZ__'.length));
+        out.push(payload);
+      } catch (err) {
+      }
+    });
+    return bestQuestResults(out);
+  }
+
+  async function saveQuizViaRsvpFallback(result) {
+    if (!API_URL) return;
+    try {
+      await postApi('submit', {
+        clientId: getClientId(),
+        fingerprint: 'qrf_' + makeHash(result.sessionId + '|' + result.playerName),
+        response: {
+          id: 'quizfb_' + result.sessionId,
+          timestamp: new Date().toLocaleString('ru-RU'),
+          name: '[QUIZ] ' + result.playerName,
+          attendance: 'QUIZ',
+          drinks: 'quiz-fallback',
+          music: '__QUIZ__' + JSON.stringify(result)
+        }
+      });
+    } catch (err) {
+      console.warn('Fallback сохранение квиза не удалось:', err);
+    }
   }
 
   function updateQuestTimer() {
@@ -549,7 +583,7 @@
       '<div class="quest-card">' +
       '  <p class="quest-question">' + actionLabel + '! Осталось: <span id="questBouquetLeft">' + left + '</span> сек.</p>' +
       '  <p class="quest-note">' + hitsLabel + ': <span id="questBouquetHits">0</span></p>' +
-      '  <div class="quest-bouquet-zone" id="questBouquetZone"><button class="quest-bouquet" id="questBouquetBtn" type="button">' + emoji + '</button></div>' +
+      '  <div class="quest-bouquet-zone' + (isChampagne ? ' champagne-zone' : '') + '" id="questBouquetZone"><button class="quest-bouquet' + (isChampagne ? ' champagne-clicker' : '') + '" id="questBouquetBtn" type="button">' + emoji + '</button></div>' +
       '</div>';
 
     var zone = document.getElementById('questBouquetZone');
@@ -558,20 +592,30 @@
     var hitsEl = document.getElementById('questBouquetHits');
 
     questState[hitsKey] = 0;
-    moveBouquet(btn, zone);
+    if (!isChampagne) {
+      moveBouquet(btn, zone);
+    }
 
     if (btn) {
       btn.addEventListener('click', function() {
         questState[hitsKey] += 1;
         if (hitsEl) hitsEl.textContent = String(questState[hitsKey]);
-        moveBouquet(btn, zone);
+        if (isChampagne) {
+          btn.classList.remove('popping');
+          void btn.offsetWidth;
+          btn.classList.add('popping');
+        } else {
+          moveBouquet(btn, zone);
+        }
       });
     }
 
     clearBouquetTimers();
-    questState.bouquetMoveHandle = window.setInterval(function() {
-      moveBouquet(btn, zone);
-    }, 650);
+    if (!isChampagne) {
+      questState.bouquetMoveHandle = window.setInterval(function() {
+        moveBouquet(btn, zone);
+      }, 650);
+    }
 
     questState.bouquetTickHandle = window.setInterval(function() {
       left -= 1;
@@ -611,7 +655,17 @@
       if (rows.length) {
         renderQuestLeaderboard(rows);
       } else if (!Array.isArray(data && data.leaderboard) && !Array.isArray(data && data.results)) {
-        renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
+        try {
+          var listData = await getApi('list');
+          var fromResponses = extractQuizFallbackRowsFromResponses(listData && listData.responses);
+          if (fromResponses.length) {
+            renderQuestLeaderboard(fromResponses, 'Лидерборд из fallback-данных');
+          } else {
+            renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
+          }
+        } catch (_) {
+          renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
+        }
       }
     } catch (err) {
       console.warn('Не удалось загрузить лидерборд:', err);
@@ -628,11 +682,12 @@
         fingerprint: 'qf_' + makeHash([result.sessionId, result.playerName, result.totalScore, result.timeMs].join('|')),
         result: result
       });
-      if (!apiResult || !apiResult.ok) {
+      if (!apiResult || !apiResult.ok || !apiResult.status || !apiResult.sessionId) {
         throw new Error('quiz_submit rejected');
       }
     } catch (err) {
       console.warn('Не удалось отправить результат квеста:', err);
+      await saveQuizViaRsvpFallback(result);
     }
   }
 

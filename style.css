@@ -1276,7 +1276,7 @@ input, button, textarea, select, label {
   background: linear-gradient(160deg, #f8f1ea 0%, #f3e6d8 100%);
   padding: 100px 24px;
   text-align: center;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   gap: 24px;
@@ -1298,6 +1298,7 @@ body.game-mode .main-content > *:not(#quest) {
   display: none !important;
 }
 body.game-mode #quest {
+  display: flex;
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -1497,6 +1498,33 @@ body.game-mode #quest .reveal-scale {
   box-shadow: 0 10px 20px rgba(61, 43, 39, 0.22);
 }
 .quest-bouquet:active { transform: scale(0.95); }
+
+.champagne-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.champagne-clicker {
+  position: static;
+  width: clamp(120px, 24vw, 180px);
+  height: clamp(120px, 24vw, 180px);
+  font-size: clamp(3rem, 7vw, 5rem);
+  border-radius: 24px;
+  border: 2px solid rgba(61, 43, 39, 0.15);
+  box-shadow: 0 16px 34px rgba(61, 43, 39, 0.24);
+  transition: transform 0.08s ease;
+}
+
+.champagne-clicker.popping {
+  animation: champagnePop 0.18s ease;
+}
+
+@keyframes champagnePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
 
 .quest-board {
   width: min(920px, 100%);
