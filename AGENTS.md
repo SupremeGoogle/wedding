@@ -9,8 +9,10 @@
 - There are no automated tests/lint/typecheck configs in this repo; manual browser verification is the source of truth.
 
 ## Data flow and admin behavior
-- RSVP submissions are saved only in browser `localStorage` under key `wedding_responses` (no network/API call).
-- `admin.html` reads the same `localStorage` key; data is visible only in the same browser/profile/device origin.
+- API endpoint is configured in `api-config.js` via `window.WEDDING_API_URL`; when empty, app falls back to local-only mode.
+- RSVP submissions are stored in both local backup (`localStorage` key `wedding_responses`) and Google Sheets (if API is configured).
+- One-time migration uses `wedding_migrated_fingerprints_v1` and server tombstones so deleted rows are not re-imported from old devices.
+- `admin.html` reads/deletes rows through Google Apps Script API (`list`, `delete`); in fallback mode it only sees local browser storage.
 - Admin password is hardcoded in `admin.html` as `123!`.
 
 ## Editing gotchas

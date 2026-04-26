@@ -11,9 +11,134 @@
   const coverVideo  = document.getElementById('coverVideo');
   const coverHint   = document.getElementById('coverHint');
   const coverStatus = document.getElementById('coverStatus');
+  const API_URL     = (window.WEDDING_API_URL || '').trim();
   var siteOpened    = false;
   var introStarted  = false;
   var flashTriggered = false;
+
+  const STORAGE_KEY_RESPONSES = 'wedding_responses';
+  const STORAGE_KEY_CLIENT_ID = 'wedding_client_id';
+  const STORAGE_KEY_MIGRATED = 'wedding_migrated_fingerprints_v1';
+  const DRINK_LABELS = {
+    wine: 'Вино',
+    sparkling: 'Игристое',
+    vodka: 'Водка',
+    whiskey: 'Виски',
+    cognac: 'Коньяк',
+    soft: 'Безалкогольные'
+  };
+
+  function getClientId() {
+    var existing = localStorage.getItem(STORAGE_KEY_CLIENT_ID);
+    if (existing) return existing;
+    var created = 'client_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem(STORAGE_KEY_CLIENT_ID, created);
+    return created;
+  }
+
+  function readLocalResponses() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_RESPONSES) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.warn('Не удалось прочитать локальные ответы:', err);
+      return [];
+    }
+  }
+
+  function writeLocalResponses(responses) {
+    localStorage.setItem(STORAGE_KEY_RESPONSES, JSON.stringify(responses));
+  }
+
+  function readMigratedFingerprints() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_MIGRATED) || '[]');
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch (err) {
+      return new Set();
+    }
+  }
+
+  function persistMigratedFingerprints(set) {
+    localStorage.setItem(STORAGE_KEY_MIGRATED, JSON.stringify(Array.from(set)));
+  }
+
+  function normalizeDrinkValues(values) {
+    return values.map(function(v) {
+      return DRINK_LABELS[v] || v;
+    });
+  }
+
+  function makeHash(input) {
+    var hash = 0;
+    for (var i = 0; i < input.length; i++) {
+      hash = ((hash << 5) - hash) + input.charCodeAt(i);
+      hash |= 0;
+    }
+    return String(Math.abs(hash));
+  }
+
+  function buildFingerprint(response) {
+    var base = [
+      response.id || '',
+      response.name || '',
+      response.attendance || '',
+      response.drinks || '',
+      response.music || '',
+      response.timestamp || ''
+    ].join('|');
+    return 'fp_' + makeHash(base);
+  }
+
+  async function postApi(action, payload) {
+    if (!API_URL) return { ok: false, offline: true };
+    var res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+    });
+    if (!res.ok) throw new Error('API ' + res.status);
+    return res.json();
+  }
+
+  async function migrateLocalResponsesOnce() {
+    if (!API_URL) return;
+    var responses = readLocalResponses();
+    if (!responses.length) return;
+
+    var clientId = getClientId();
+    var migrated = readMigratedFingerprints();
+
+    for (var i = 0; i < responses.length; i++) {
+      var item = responses[i] || {};
+      if (!item.id) {
+        item.id = clientId + '_legacy_' + i;
+      }
+      item.music = item.music || '';
+      item.drinks = item.drinks || '';
+
+      var fingerprint = buildFingerprint(item);
+      if (migrated.has(fingerprint)) continue;
+
+      try {
+        var result = await postApi('migrate', {
+          clientId: clientId,
+          fingerprint: fingerprint,
+          response: item
+        });
+
+        if (result && result.ok) {
+          migrated.add(fingerprint);
+          persistMigratedFingerprints(migrated);
+        }
+      } catch (err) {
+        console.warn('Миграция локальных данных не завершена:', err);
+        break;
+      }
+    }
+
+    writeLocalResponses(responses);
+  }
 
   function setCoverStatus(text) {
     if (!coverStatus) return;
@@ -271,21 +396,45 @@
     const btn = document.getElementById('submitBtn');
     const formData = new FormData(form);
 
+    const clientId = getClientId();
+    const drinks = normalizeDrinkValues(formData.getAll('drinks'));
+    const uniqueId = clientId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
     const response = {
-      id: Date.now(),
+      id: uniqueId,
       timestamp: new Date().toLocaleString('ru-RU'),
-      name: formData.get('guestName'),
+      name: (formData.get('guestName') || '').trim(),
       attendance: formData.get('attendance') === 'yes' ? 'Придет' : 'Не придет',
-      drinks: formData.getAll('drinks').join(', ')
+      drinks: drinks.join(', '),
+      music: (formData.get('music') || '').trim()
     };
 
-    // Save to localStorage
-    const responses = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
+    const fingerprint = buildFingerprint(response);
+
+    // Save to localStorage (offline safety + one-time migration source)
+    const responses = readLocalResponses();
     responses.push(response);
-    localStorage.setItem('wedding_responses', JSON.stringify(responses));
+    writeLocalResponses(responses);
+
+    var migrated = readMigratedFingerprints();
 
     btn.textContent = 'Отправка...';
     btn.disabled = true;
+
+    if (API_URL) {
+      postApi('submit', {
+        clientId: clientId,
+        fingerprint: fingerprint,
+        response: response
+      }).then(function(result) {
+        if (result && result.ok) {
+          migrated.add(fingerprint);
+          persistMigratedFingerprints(migrated);
+        }
+      }).catch(function(err) {
+        console.warn('Не удалось отправить ответ в Google Sheets:', err);
+      });
+    }
 
     setTimeout(function() {
       form.style.opacity = '0';
@@ -297,6 +446,8 @@
       }, 400);
     }, 700);
   };
+
+  migrateLocalResponsesOnce();
 
   /* ---------- PARALLAX LEAVES ---------- */
   var leaves = document.querySelectorAll('.leaf');

@@ -99,7 +99,6 @@
       <h2>Ответы гостей</h2>
       <div class="actions">
         <button class="btn-export" onclick="exportCSV()">Скачать CSV</button>
-        <button class="btn-clear" onclick="clearData()">Очистить всё</button>
       </div>
     </div>
 
@@ -111,52 +110,120 @@
             <th>Имя</th>
             <th>Присутствие</th>
             <th>Напитки</th>
+            <th>Музыка</th>
+            <th>Действие</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
-
+  <script src="api-config.js"></script>
   <script>
+    const API_URL = (window.WEDDING_API_URL || '').trim();
+    let currentRows = [];
+
     function checkPass() {
       const pass = document.getElementById('passInput').value;
       if (pass === '123!') {
         document.getElementById('loginBox').style.display = 'none';
         document.getElementById('adminContainer').style.display = 'flex';
-        renderTable();
+        loadRows();
       } else {
         alert('Неверный пароль');
       }
     }
 
-    function renderTable() {
-      const responses = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
-      const tbody = document.querySelector('#responsesTable tbody');
-      tbody.innerHTML = responses.map(r => `
-        <tr>
-          <td>${r.timestamp}</td>
-          <td>${r.name}</td>
-          <td>${r.attendance}</td>
-          <td>${r.drinks}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="4" style="text-align:center">Ответов пока нет</td></tr>';
+    function esc(v) {
+      return String(v || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
-    function clearData() {
-      if (confirm('Удалить все ответы?')) {
-        localStorage.removeItem('wedding_responses');
-        renderTable();
+    async function loadRows() {
+      if (!API_URL) {
+        const local = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
+        currentRows = local.map(r => ({
+          responseId: String(r.id || ''),
+          timestamp: r.timestamp || '',
+          name: r.name || '',
+          attendance: r.attendance || '',
+          drinks: r.drinks || '',
+          music: r.music || ''
+        })).reverse();
+        renderTable(currentRows);
+        return;
+      }
+
+      try {
+        const res = await fetch(API_URL + '?action=list', { method: 'GET' });
+        const data = await res.json();
+        currentRows = (data.responses || []).map(r => ({
+          responseId: r.responseId || '',
+          fingerprint: r.fingerprint || '',
+          timestamp: r.timestamp || '',
+          name: r.name || '',
+          attendance: r.attendance || '',
+          drinks: r.drinks || '',
+          music: r.music || ''
+        }));
+        renderTable(currentRows);
+      } catch (err) {
+        console.error(err);
+        alert('Не удалось загрузить ответы из Google Sheets.');
+      }
+    }
+
+    function renderTable(rows) {
+      const tbody = document.querySelector('#responsesTable tbody');
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${esc(r.timestamp)}</td>
+          <td>${esc(r.name)}</td>
+          <td>${esc(r.attendance)}</td>
+          <td>${esc(r.drinks)}</td>
+          <td>${esc(r.music || '—')}</td>
+          <td><button onclick="deleteRow('${esc(r.responseId)}','${esc(r.fingerprint || '')}')">Удалить</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center">Ответов пока нет</td></tr>';
+    }
+
+    async function deleteRow(responseId, fingerprint) {
+      if (!confirm('Удалить эту запись?')) return;
+
+      if (!API_URL) {
+        const raw = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
+        const next = raw.filter(r => String(r.id || '') !== String(responseId));
+        localStorage.setItem('wedding_responses', JSON.stringify(next));
+        loadRows();
+        return;
+      }
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', responseId, fingerprint })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error('Delete failed');
+        loadRows();
+      } catch (err) {
+        console.error(err);
+        alert('Не удалось удалить запись.');
       }
     }
 
     function exportCSV() {
-      const responses = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
+      const responses = currentRows;
       if (!responses.length) return alert('Нет данных');
       
-      let csv = 'Дата/Время;Имя;Присутствие;Напитки\n';
+      let csv = 'Дата/Время;Имя;Присутствие;Напитки;Музыка\n';
       responses.forEach(r => {
-        csv += `${r.timestamp};${r.name};${r.attendance};${r.drinks}\n`;
+        csv += `${r.timestamp};${r.name};${r.attendance};${r.drinks};${r.music || ''}\n`;
       });
       
       const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
