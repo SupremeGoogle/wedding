@@ -119,7 +119,7 @@
 
   async function getApi(action) {
     if (!API_URL) return { ok: false, offline: true };
-    var res = await fetch(API_URL + '?action=' + encodeURIComponent(action), { method: 'GET' });
+    var res = await fetch(API_URL + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now(), { method: 'GET' });
     if (!res.ok) throw new Error('API ' + res.status);
     var contentType = (res.headers.get('content-type') || '').toLowerCase();
     if (contentType.indexOf('application/json') === -1) {
@@ -656,32 +656,32 @@
 
     if (!API_URL) return;
 
+    var remoteRows = [];
+    var fallbackRows = [];
+
     try {
       var data = await getApi('quiz_leaderboard');
-      var rows = [];
       if (data && Array.isArray(data.leaderboard)) {
-        rows = data.leaderboard;
+        remoteRows = data.leaderboard;
       } else if (data && Array.isArray(data.results)) {
-        rows = bestQuestResults(data.results);
-      }
-      if (rows.length) {
-        renderQuestLeaderboard(rows);
-      } else if (!Array.isArray(data && data.leaderboard) && !Array.isArray(data && data.results)) {
-        try {
-          var listData = await getApi('list');
-          var fromResponses = extractQuizFallbackRowsFromResponses(listData && listData.responses);
-          if (fromResponses.length) {
-            renderQuestLeaderboard(fromResponses, 'Лидерборд из fallback-данных');
-          } else {
-            renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
-          }
-        } catch (_) {
-          renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
-        }
+        remoteRows = data.results;
       }
     } catch (err) {
-      console.warn('Не удалось загрузить лидерборд:', err);
-      renderQuestLeaderboard(localRows, 'Не удалось загрузить из Google, показан локальный лидерборд');
+      console.warn('Не удалось загрузить quiz_leaderboard:', err);
+    }
+
+    try {
+      var listData = await getApi('list');
+      fallbackRows = extractQuizFallbackRowsFromResponses(listData && listData.responses);
+    } catch (err2) {
+      console.warn('Не удалось загрузить fallback leaderboard из list:', err2);
+    }
+
+    var merged = bestQuestResults([].concat(remoteRows || [], fallbackRows || [], localRows || []));
+    if (merged.length) {
+      renderQuestLeaderboard(merged);
+    } else {
+      renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
     }
   }
 
