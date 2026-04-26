@@ -170,40 +170,39 @@
     {
       type: 'question',
       character: 'Жених1.png',
-      speech: 'Мне очень нужна помощь! Невеста пропала перед праздником. Первая подсказка уже здесь.',
-      question: 'Что чаще всего держит невеста в руках во время церемонии?',
-      options: ['Ключ от дома', 'Букет', 'Фотоальбом', 'Чашку кофе'],
-      correct: 1
+      speech: 'Первая загадка уже здесь. Справишься?',
+      question: 'Если вдруг сбылась мечта: рядом галстук и фата, если гости ждут в усадьбе, значит, это ваша…',
+      options: ['Брак', 'Дружба', 'Свадьба', 'Вечеринка'],
+      correct: 2
     },
     {
       type: 'question',
       character: 'Жених2.png',
       speech: 'Отлично, ты на верном пути! Следующая загадка приведет нас ближе.',
-      question: 'Какой символ чаще всего означает любовь и обещание?',
-      options: ['Колокольчик', 'Кольцо', 'Зонт', 'Часы'],
-      correct: 1
+      question: 'Как расшифровывается ЗАГС?',
+      options: ['Зона Активных Гостей Свадьбы', 'Зал Ароматов, Гостей и Смеха', 'Запись Актов Гражданского Состояния', 'Заявление о Активной Годовщине Свадьбы'],
+      correct: 2
     },
     {
       type: 'question',
       character: 'Жених2.png',
       speech: 'Я начинаю верить, что мы успеем! Давай еще один шаг.',
-      question: 'Какой месяц указан в приглашении на нашу свадьбу?',
-      options: ['Июнь', 'Август', 'Июль', 'Сентябрь'],
-      correct: 2
+      question: 'Кто сделал первый шаг?',
+      options: ['Виктор', 'Диана'],
+      correct: 0
+    },
+    {
+      type: 'champagne',
+      character: 'Жених2.png',
+      speech: 'Смотри, шампанское! Нажимай на бокал как можно больше раз за 10 секунд.',
+      duration: 10
     },
     {
       type: 'bouquet',
-      character: 'Жених2.png',
-      speech: 'Смотри, букет улетает! Поймай его как можно больше раз за 12 секунд.',
-      duration: 12
-    },
-    {
-      type: 'question',
+      miniGame: 'bouquet',
       character: 'Невеста1.png',
-      speech: 'Я почти нашлась! Последняя загадка, и мы снова вместе.',
-      question: 'Что лучше всего взять с собой на свадьбу кроме хорошего настроения?',
-      options: ['Злость', 'Пожелания и улыбку', 'Скуку', 'Сон'],
-      correct: 1
+      speech: 'Финальное испытание! Лови букет - он телепортируется, успей нажать как можно больше раз за 10 секунд.',
+      duration: 10
     }
   ];
 
@@ -212,7 +211,10 @@
     finished: false,
     stageIndex: -1,
     correctCount: 0,
+    champagneHits: 0,
+    champagnePoints: 0,
     bouquetHits: 0,
+    bouquetPoints: 0,
     playerName: '',
     playerId: '',
     sessionId: '',
@@ -230,12 +232,44 @@
     return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
   }
 
+  function calcChampagnePoints(clicks) {
+    if (clicks < 5) return 0;
+    if (clicks <= 10) return 1;
+    if (clicks <= 20) return 2;
+    if (clicks <= 30) return 3;
+    if (clicks <= 40) return 4;
+    if (clicks <= 50) return 5;
+    if (clicks <= 60) return 6;
+    if (clicks <= 70) return 7;
+    if (clicks <= 80) return 8;
+    if (clicks <= 90) return 9;
+    if (clicks <= 100) return 10;
+    return 12;
+  }
+
+  function calcBouquetPoints(clicks) {
+    if (clicks < 4) return 0;
+    if (clicks <= 8) return 1;
+    if (clicks <= 12) return 2;
+    if (clicks <= 16) return 3;
+    if (clicks <= 20) return 4;
+    if (clicks <= 24) return 5;
+    if (clicks <= 28) return 6;
+    if (clicks <= 32) return 7;
+    if (clicks <= 36) return 8;
+    if (clicks <= 40) return 9;
+    return 10;
+  }
+
   function setQuestCharacter(src) {
     if (!questCharacter) return;
     var fallback = 'Невеста1.png';
     questCharacter.onerror = function() {
       if (questCharacter.getAttribute('src') !== fallback) questCharacter.setAttribute('src', fallback);
     };
+    questCharacter.classList.remove('quest-character-enter');
+    void questCharacter.offsetWidth;
+    questCharacter.classList.add('quest-character-enter');
     questCharacter.setAttribute('src', src || fallback);
   }
 
@@ -267,6 +301,44 @@
     }
   }
 
+  function readQuestResultsLocal() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(STORAGE_KEY_QUIZ_RESULTS) || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function bestQuestResults(rows) {
+    var bestByName = {};
+    rows.forEach(function(row) {
+      var key = String((row && row.playerName) || '').trim().toLowerCase() || ('player_' + ((row && row.sessionId) || ''));
+      var prev = bestByName[key];
+      var score = Number((row && row.totalScore) || 0);
+      var timeMs = Number((row && row.timeMs) || 0);
+      if (!prev || score > Number(prev.totalScore || 0) || (score === Number(prev.totalScore || 0) && timeMs < Number(prev.timeMs || 0))) {
+        bestByName[key] = row;
+      }
+    });
+    return Object.keys(bestByName).map(function(k) { return bestByName[k]; }).sort(function(a, b) {
+      var scoreDiff = Number((b && b.totalScore) || 0) - Number((a && a.totalScore) || 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      return Number((a && a.timeMs) || 0) - Number((b && b.timeMs) || 0);
+    });
+  }
+
+  function renderQuestLeaderboard(rows, notice) {
+    if (!questLeaderboard) return;
+    if (!rows || !rows.length) {
+      questLeaderboard.textContent = notice || 'Пока нет результатов';
+      return;
+    }
+    questLeaderboard.innerHTML = rows.slice(0, 10).map(function(r, idx) {
+      return '<div class="quest-row"><strong>' + (idx + 1) + '</strong><span>' + ((r && r.playerName) || 'Гость') + '</span><span>' + (Number((r && r.totalScore) || 0) || 0) + ' очков</span><span>' + formatMs(Number((r && r.timeMs) || 0)) + '</span></div>';
+    }).join('');
+  }
+
   function updateQuestTimer() {
     if (!questTimer || !questState.startedAt) return;
     questTimer.textContent = formatMs(Date.now() - questState.startedAt);
@@ -287,14 +359,13 @@
   function renderQuestStartCard() {
     if (!questContent) return;
     if (questBoard) questBoard.classList.add('is-hidden');
-    setQuestCharacter('Жених1.png');
-    typeSpeech('Привет! Я жених, и мне нужна твоя помощь. Подскажи путь к невесте, пожалуйста.');
+    setQuestCharacter('Жених2.png');
+    typeSpeech('Привет! Как тебя зовут?');
     questContent.innerHTML = '' +
       '<div class="quest-card">' +
-      '  <p class="quest-question">Как тебя зовут, герой сегодняшнего квеста?</p>' +
+      '  <p class="quest-question">Введите имя, чтобы начать диалог</p>' +
       '  <input class="fi" id="questPlayerName" type="text" placeholder="Введите имя" style="padding:12px 6px;border-bottom:1px solid #bfa38a;" />' +
-      '  <p class="quest-note" style="margin-top:8px;">После кнопки "Начать" включится таймер.</p>' +
-      '  <div class="quest-actions" style="margin-top:10px;"><button class="quest-btn primary" id="questStartBtn">Начать</button></div>' +
+      '  <div class="quest-actions" style="margin-top:10px;"><button class="quest-btn primary" id="questStartBtn">Продолжить</button></div>' +
       '</div>';
 
     var startBtn = document.getElementById('questStartBtn');
@@ -314,14 +385,43 @@
         questState.playerId = getClientId();
         questState.sessionId = 'quiz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         questState.correctCount = 0;
+        questState.champagneHits = 0;
+        questState.champagnePoints = 0;
         questState.bouquetHits = 0;
+        questState.bouquetPoints = 0;
         questState.stageIndex = -1;
-        questState.started = true;
+        questState.started = false;
         questState.finished = false;
-        startQuestTimer();
-        runQuestNextStage();
+        renderQuestIntroStepOne();
       });
     }
+  }
+
+  function renderQuestIntroStepOne() {
+    setQuestCharacter('Жених2.png');
+    renderDialogueContinue(
+      'Привет, ' + questState.playerName + '. Меня зовут Виктор, я бы хотел попросить тебя о помощи. Диана пропала.... Ты можешь мне помочь?',
+      renderQuestIntroStepTwo,
+      'Да'
+    );
+  }
+
+  function renderQuestIntroStepTwo() {
+    setQuestCharacter('Жених2.png');
+    renderDialogueContinue(
+      'Я нашел записку, в ней написано, чтобы найти невесту, нужно пройти 5 задачек на время. Ты справишься с этим?',
+      renderQuestIntroStepThree,
+      'Да'
+    );
+  }
+
+  function renderQuestIntroStepThree() {
+    setQuestCharacter('Жених1.png');
+    renderDialogueContinue('Удачи!', function() {
+      questState.started = true;
+      startQuestTimer();
+      runQuestNextStage();
+    }, 'Начать');
   }
 
   function renderDialogueContinue(speechText, onContinue, buttonText) {
@@ -347,7 +447,7 @@
       renderQuestionStage(stage);
       return;
     }
-    if (stage.type === 'bouquet') {
+    if (stage.type === 'bouquet' || stage.type === 'champagne') {
       renderBouquetStage(stage);
     }
   }
@@ -372,11 +472,9 @@
       '  <p class="quest-question">' + stage.question + '</p>' +
       '  <div class="quest-options" id="questOptions">' + optionsHtml + '</div>' +
       '  <p class="quest-note" id="questFeedback" style="margin-top:10px;"></p>' +
-      '  <div class="quest-actions" style="margin-top:12px;"><button class="quest-btn primary" id="questNextBtn" disabled>Дальше</button></div>' +
       '</div>';
 
     var opts = questContent.querySelectorAll('.quest-option');
-    var nextBtn = document.getElementById('questNextBtn');
     var feedback = document.getElementById('questFeedback');
     var answered = false;
 
@@ -395,11 +493,10 @@
           if (correctBtn) correctBtn.classList.add('correct');
           if (feedback) feedback.textContent = 'Почти! Верный ответ подсвечен.';
         }
-        if (nextBtn) nextBtn.disabled = false;
+        opts.forEach(function(optionBtn) { optionBtn.disabled = true; });
+        window.setTimeout(runQuestNextStage, 850);
       });
     });
-
-    if (nextBtn) nextBtn.addEventListener('click', runQuestNextStage);
   }
 
   function moveBouquet(btn, zone) {
@@ -424,18 +521,25 @@
     setQuestCharacter(stage.character);
     renderDialogueContinue(stage.speech, function() {
       runBouquetStage(stage);
-    }, 'Ловить букет');
+    }, stage.type === 'champagne' ? 'Жать шампанское' : 'Ловить букет');
   }
 
   function runBouquetStage(stage) {
     if (!questContent) return;
 
+    var isChampagne = stage.type === 'champagne';
+    var hitsKey = isChampagne ? 'champagneHits' : 'bouquetHits';
+    var pointsKey = isChampagne ? 'champagnePoints' : 'bouquetPoints';
+    var emoji = isChampagne ? '🥂' : '💐';
+    var actionLabel = isChampagne ? 'Нажимай на шампанское' : 'Лови букет';
+    var hitsLabel = isChampagne ? 'Нажатий' : 'Поймано букетов';
+
     var left = stage.duration;
     questContent.innerHTML = '' +
       '<div class="quest-card">' +
-      '  <p class="quest-question">Лови букет! Осталось: <span id="questBouquetLeft">' + left + '</span> сек.</p>' +
-      '  <p class="quest-note">Попаданий: <span id="questBouquetHits">0</span></p>' +
-      '  <div class="quest-bouquet-zone" id="questBouquetZone"><button class="quest-bouquet" id="questBouquetBtn" type="button">💐</button></div>' +
+      '  <p class="quest-question">' + actionLabel + '! Осталось: <span id="questBouquetLeft">' + left + '</span> сек.</p>' +
+      '  <p class="quest-note">' + hitsLabel + ': <span id="questBouquetHits">0</span></p>' +
+      '  <div class="quest-bouquet-zone" id="questBouquetZone"><button class="quest-bouquet" id="questBouquetBtn" type="button">' + emoji + '</button></div>' +
       '</div>';
 
     var zone = document.getElementById('questBouquetZone');
@@ -443,13 +547,13 @@
     var leftEl = document.getElementById('questBouquetLeft');
     var hitsEl = document.getElementById('questBouquetHits');
 
-    questState.bouquetHits = 0;
+    questState[hitsKey] = 0;
     moveBouquet(btn, zone);
 
     if (btn) {
       btn.addEventListener('click', function() {
-        questState.bouquetHits += 1;
-        if (hitsEl) hitsEl.textContent = String(questState.bouquetHits);
+        questState[hitsKey] += 1;
+        if (hitsEl) hitsEl.textContent = String(questState[hitsKey]);
         moveBouquet(btn, zone);
       });
     }
@@ -464,9 +568,13 @@
       if (leftEl) leftEl.textContent = String(Math.max(0, left));
       if (left <= 0) {
         clearBouquetTimers();
+        questState[pointsKey] = isChampagne
+          ? calcChampagnePoints(questState[hitsKey])
+          : calcBouquetPoints(questState[hitsKey]);
         questContent.innerHTML = '' +
           '<div class="quest-card">' +
-          '  <p class="quest-question">Время вышло! Ты поймал(а) букет: ' + questState.bouquetHits + ' раз.</p>' +
+          '  <p class="quest-question">Время вышло! ' + hitsLabel + ': ' + questState[hitsKey] + '.</p>' +
+          '  <p class="quest-note">Бонус за этап: <strong>' + questState[pointsKey] + '</strong> балл(ов).</p>' +
           '  <div class="quest-actions"><button class="quest-btn primary" id="questAfterBouquet">Продолжить</button></div>' +
           '</div>';
         var next = document.getElementById('questAfterBouquet');
@@ -477,25 +585,27 @@
 
   async function loadQuestLeaderboard() {
     if (!questLeaderboard) return;
-    if (!API_URL) {
-      questLeaderboard.textContent = 'Лидерборд появится после подключения Google Sheets.';
-      return;
-    }
+    var localRows = bestQuestResults(readQuestResultsLocal());
+    renderQuestLeaderboard(localRows, API_URL ? 'Пока нет результатов' : 'Лидерборд сейчас локальный для этого устройства');
+
+    if (!API_URL) return;
 
     try {
       var data = await getApi('quiz_leaderboard');
-      var rows = (data && data.leaderboard) || [];
-      if (!rows.length) {
-        questLeaderboard.textContent = 'Пока нет результатов';
-        return;
+      var rows = [];
+      if (data && Array.isArray(data.leaderboard)) {
+        rows = data.leaderboard;
+      } else if (data && Array.isArray(data.results)) {
+        rows = bestQuestResults(data.results);
       }
-
-      questLeaderboard.innerHTML = rows.slice(0, 10).map(function(r, idx) {
-        return '<div class="quest-row"><strong>' + (idx + 1) + '</strong><span>' + (r.playerName || 'Гость') + '</span><span>' + (r.totalScore || 0) + ' очков</span><span>' + formatMs(Number(r.timeMs || 0)) + '</span></div>';
-      }).join('');
+      if (rows.length) {
+        renderQuestLeaderboard(rows);
+      } else if (!Array.isArray(data && data.leaderboard) && !Array.isArray(data && data.results)) {
+        renderQuestLeaderboard(localRows, 'Лидерборд локальный: обновите Apps Script deployment с quiz_* методами');
+      }
     } catch (err) {
       console.warn('Не удалось загрузить лидерборд:', err);
-      questLeaderboard.textContent = 'Не удалось загрузить лидерборд';
+      renderQuestLeaderboard(localRows, 'Не удалось загрузить из Google, показан локальный лидерборд');
     }
   }
 
@@ -504,13 +614,38 @@
     if (!API_URL) return;
 
     try {
-      await postApi('quiz_submit', {
+      var apiResult = await postApi('quiz_submit', {
         fingerprint: 'qf_' + makeHash([result.sessionId, result.playerName, result.totalScore, result.timeMs].join('|')),
         result: result
       });
+      if (!apiResult || !apiResult.ok) {
+        throw new Error('quiz_submit rejected');
+      }
     } catch (err) {
       console.warn('Не удалось отправить результат квеста:', err);
     }
+  }
+
+  function speechDurationMs(text) {
+    return Math.max(1700, (String(text || '').length * 24) + 650);
+  }
+
+  function renderQuestFinalCard(timeMs, totalScore) {
+    if (!questContent) return;
+    questContent.innerHTML = '' +
+      '<div class="quest-card">' +
+      '  <p class="quest-question">Готово, ' + questState.playerName + '!</p>' +
+      '  <p class="quest-note">Правильных ответов: <strong>' + questState.correctCount + '/3</strong></p>' +
+      '  <p class="quest-note">Нажатий на шампанское: <strong>' + questState.champagneHits + '</strong></p>' +
+      '  <p class="quest-note">Бонус за шампанское: <strong>' + questState.champagnePoints + ' балл(ов)</strong></p>' +
+      '  <p class="quest-note">Поймано букетов: <strong>' + questState.bouquetHits + '</strong></p>' +
+      '  <p class="quest-note">Бонус за букет: <strong>' + questState.bouquetPoints + ' балл(ов)</strong></p>' +
+      '  <p class="quest-note">Время: <strong>' + formatMs(timeMs) + '</strong></p>' +
+      '  <p class="quest-note">Итог: <strong>' + totalScore + ' очков</strong></p>' +
+      '  <div class="quest-actions" style="margin-top:12px;"><button class="quest-btn primary" id="questRestart">Сыграть еще</button></div>' +
+      '</div>';
+    var restart = document.getElementById('questRestart');
+    if (restart) restart.addEventListener('click', renderQuestStartCard);
   }
 
   function finishQuest() {
@@ -522,7 +657,7 @@
 
     var timeMs = Math.max(0, Date.now() - questState.startedAt);
     var speedBonus = Math.max(0, 360 - Math.floor(timeMs / 1000) * 4);
-    var totalScore = questState.correctCount * 180 + questState.bouquetHits * 20 + speedBonus;
+    var totalScore = questState.correctCount * 180 + questState.champagnePoints * 22 + questState.bouquetPoints * 30 + speedBonus;
 
     var result = {
       sessionId: questState.sessionId,
@@ -536,22 +671,24 @@
     };
 
     if (questBoard) questBoard.classList.remove('is-hidden');
-
     submitQuestResult(result).then(loadQuestLeaderboard);
 
+    var firstSpeech = 'Что произошло? Вы меня спасли!';
+    setQuestCharacter('Невеста1.png');
+    typeSpeech(firstSpeech);
     if (questContent) {
-      questContent.innerHTML = '' +
-        '<div class="quest-card">' +
-        '  <p class="quest-question">Готово, ' + questState.playerName + '!</p>' +
-        '  <p class="quest-note">Правильных ответов: <strong>' + questState.correctCount + '/4</strong></p>' +
-        '  <p class="quest-note">Поймано букетов: <strong>' + questState.bouquetHits + '</strong></p>' +
-        '  <p class="quest-note">Время: <strong>' + formatMs(timeMs) + '</strong></p>' +
-        '  <p class="quest-note">Итог: <strong>' + totalScore + ' очков</strong></p>' +
-        '  <div class="quest-actions" style="margin-top:12px;"><button class="quest-btn primary" id="questRestart">Сыграть еще</button></div>' +
-        '</div>';
-      var restart = document.getElementById('questRestart');
-      if (restart) restart.addEventListener('click', renderQuestStartCard);
+      questContent.innerHTML = '<div class="quest-card"><p class="quest-note">...</p></div>';
     }
+
+    window.setTimeout(function() {
+      var secondSpeech = 'Большое спасибо!';
+      setQuestCharacter('Молодожены.png');
+      typeSpeech(secondSpeech);
+
+      window.setTimeout(function() {
+        renderQuestFinalCard(timeMs, totalScore);
+      }, speechDurationMs(secondSpeech));
+    }, speechDurationMs(firstSpeech));
   }
 
   function initQuestGame() {

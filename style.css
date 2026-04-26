@@ -1384,6 +1384,13 @@ body.game-mode #quest .reveal-scale {
   object-fit: contain;
   filter: drop-shadow(0 12px 24px rgba(61, 43, 39, 0.2));
 }
+.quest-character-enter {
+  animation: questCharacterEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes questCharacterEnter {
+  from { opacity: 0; transform: translateX(-16px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
 .quest-speech {
   min-height: 80px;
   background: #fff;
