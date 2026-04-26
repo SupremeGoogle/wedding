@@ -98,6 +98,7 @@
     <div class="header">
       <h2>Ответы гостей</h2>
       <div class="actions">
+        <button class="btn-export" onclick="refreshData()">Обновить</button>
         <button class="btn-export" onclick="exportCSV()">Скачать CSV</button>
       </div>
     </div>
@@ -246,6 +247,11 @@
         console.error(err);
         renderQuizTable([]);
       }
+    }
+
+    function refreshData() {
+      loadRows();
+      loadQuizRows();
     }
 
     function renderTable(rows) {

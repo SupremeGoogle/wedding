@@ -15,6 +15,7 @@
   const questContent = document.getElementById('questContent');
   const questSpeech = document.getElementById('questSpeech');
   const questCharacter = document.getElementById('questCharacter');
+  const questCharacterWrap = document.querySelector('.quest-character-wrap');
   const questTimer  = document.getElementById('questTimer');
   const questLeaderboard = document.getElementById('questLeaderboard');
   const questBoard = document.getElementById('questBoard');
@@ -273,6 +274,11 @@
     questCharacter.setAttribute('src', src || fallback);
   }
 
+  function setQuestCharacterVisible(visible) {
+    if (!questCharacterWrap) return;
+    questCharacterWrap.style.display = visible ? '' : 'none';
+  }
+
   function typeSpeech(text) {
     if (!questSpeech) return;
     if (questState.speechHandle) window.clearInterval(questState.speechHandle);
@@ -359,11 +365,14 @@
   function renderQuestStartCard() {
     if (!questContent) return;
     if (questBoard) questBoard.classList.add('is-hidden');
-    setQuestCharacter('Жених2.png');
-    typeSpeech('Привет! Как тебя зовут?');
+    setQuestCharacterVisible(false);
+    if (questSpeech) {
+      questSpeech.classList.remove('typing');
+      questSpeech.textContent = '';
+    }
     questContent.innerHTML = '' +
       '<div class="quest-card">' +
-      '  <p class="quest-question">Введите имя, чтобы начать диалог</p>' +
+      '  <p class="quest-question">Ваше имя</p>' +
       '  <input class="fi" id="questPlayerName" type="text" placeholder="Введите имя" style="padding:12px 6px;border-bottom:1px solid #bfa38a;" />' +
       '  <div class="quest-actions" style="margin-top:10px;"><button class="quest-btn primary" id="questStartBtn">Продолжить</button></div>' +
       '</div>';
@@ -398,6 +407,7 @@
   }
 
   function renderQuestIntroStepOne() {
+    setQuestCharacterVisible(true);
     setQuestCharacter('Жених2.png');
     renderDialogueContinue(
       'Привет, ' + questState.playerName + '. Меня зовут Виктор, я бы хотел попросить тебя о помощи. Диана пропала.... Ты можешь мне помочь?',
@@ -409,7 +419,7 @@
   function renderQuestIntroStepTwo() {
     setQuestCharacter('Жених2.png');
     renderDialogueContinue(
-      'Я нашел записку, в ней написано, чтобы найти невесту, нужно пройти 5 задачек на время. Ты справишься с этим?',
+      'Я нашёл записку. В ней сказано: чтобы найти невесту, тебе нужно пройти 5 заданий на время. Справишься?',
       renderQuestIntroStepThree,
       'Да'
     );
