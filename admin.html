@@ -209,7 +209,10 @@
       (rows || []).forEach(r => {
         if (!isQuizFallbackRow(r)) return;
         try {
-          parsed.push(JSON.parse(r.music.slice('__QUIZ__'.length)));
+          const payload = JSON.parse(r.music.slice('__QUIZ__'.length));
+          payload._fallbackResponseId = r.responseId || r.id || '';
+          payload._fallbackFingerprint = r.fingerprint || '';
+          parsed.push(payload);
         } catch (e) {
         }
       });
@@ -307,7 +310,9 @@
           totalScore: Number(r.totalScore || 0),
           timeMs: Number(r.timeMs || 0),
           correctCount: Number(r.correctCount || 0),
-          bouquetHits: Number(r.bouquetHits || 0)
+          bouquetHits: Number(r.bouquetHits || 0),
+          fallbackResponseId: r._fallbackResponseId || '',
+          fallbackFingerprint: r._fallbackFingerprint || ''
         }));
         renderQuizTable(currentQuizRows);
       } catch (err) {
@@ -349,7 +354,7 @@
           <td>${esc(formatMs(r.timeMs))}</td>
           <td>${esc(r.correctCount)}</td>
           <td>${esc(r.bouquetHits)}</td>
-          <td><button onclick="deleteQuizRow('${esc(r.sessionId)}','${esc(r.fingerprint || '')}')">Удалить</button></td>
+          <td><button onclick="deleteQuizRow('${esc(r.sessionId)}','${esc(r.fingerprint || '')}','${esc(r.fallbackResponseId || '')}','${esc(r.fallbackFingerprint || '')}')">Удалить</button></td>
         </tr>
       `).join('') || '<tr><td colspan="6" style="text-align:center">Результатов пока нет</td></tr>';
     }
@@ -384,9 +389,37 @@
       }
     }
 
-    async function deleteQuizRow(sessionId, fingerprint) {
+    async function deleteQuizRow(sessionId, fingerprint, fallbackResponseId, fallbackFingerprint) {
       if (!confirm('Удалить результат квеста?')) return;
       if (!API_URL) return;
+
+      if (fallbackResponseId) {
+        try {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'delete',
+              responseId: fallbackResponseId,
+              fingerprint: fallbackFingerprint || ''
+            })
+          });
+          const contentType = (res.headers.get('content-type') || '').toLowerCase();
+          if (!res.ok || contentType.indexOf('application/json') === -1) {
+            throw new Error('Fallback quiz delete unavailable');
+          }
+          const data = await res.json();
+          if (!data.ok) throw new Error('Fallback quiz delete failed');
+          loadRows();
+          loadQuizRows();
+          return;
+        } catch (err) {
+          console.error(err);
+          alert('Не удалось удалить результат квеста.');
+          return;
+        }
+      }
+
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
