@@ -1675,6 +1675,11 @@ body.game-mode #quest .reveal-scale {
   .quest-option, .quest-btn { font-size: 0.95rem; }
   .quest-bouquet-zone { height: 210px; }
   .quest-bouquet { width: 56px; height: 56px; font-size: 1.7rem; }
+  .champagne-clicker {
+    width: clamp(156px, 31vw, 234px);
+    height: clamp(156px, 31vw, 234px);
+    font-size: clamp(3.9rem, 9.1vw, 6.5rem);
+  }
   .quest-row { grid-template-columns: 24px 1fr auto; font-size: 0.95rem; }
 
   .calendar-section { padding: 70px 14px; gap: 24px; }

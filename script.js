@@ -753,7 +753,7 @@
       window.setTimeout(function() {
         renderQuestFinalCard(timeMs, totalScore);
       }, speechDurationMs(secondSpeech));
-    }, speechDurationMs(firstSpeech));
+    }, speechDurationMs(firstSpeech) + 4000);
   }
 
   function initQuestGame() {
