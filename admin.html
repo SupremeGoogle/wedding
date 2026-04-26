@@ -160,6 +160,10 @@
 
       try {
         const res = await fetch(API_URL + '?action=list', { method: 'GET' });
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (!res.ok || contentType.indexOf('application/json') === -1) {
+          throw new Error('API_NON_JSON_OR_PRIVATE');
+        }
         const data = await res.json();
         currentRows = (data.responses || []).map(r => ({
           responseId: r.responseId || '',
@@ -173,7 +177,17 @@
         renderTable(currentRows);
       } catch (err) {
         console.error(err);
-        alert('Не удалось загрузить ответы из Google Sheets.');
+        const local = JSON.parse(localStorage.getItem('wedding_responses') || '[]');
+        currentRows = local.map(r => ({
+          responseId: String(r.id || ''),
+          timestamp: r.timestamp || '',
+          name: r.name || '',
+          attendance: r.attendance || '',
+          drinks: r.drinks || '',
+          music: r.music || ''
+        })).reverse();
+        renderTable(currentRows);
+        alert('Не удалось загрузить ответы из Google Sheets. Проверьте Apps Script: доступ Web app = Anyone и активный deployment /exec. Показаны только локальные данные этого браузера.');
       }
     }
 
@@ -205,9 +219,13 @@
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'delete', responseId, fingerprint })
         });
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (!res.ok || contentType.indexOf('application/json') === -1) {
+          throw new Error('Delete API unavailable/private');
+        }
         const data = await res.json();
         if (!data.ok) throw new Error('Delete failed');
         loadRows();

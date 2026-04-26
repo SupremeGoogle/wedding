@@ -94,10 +94,14 @@
     if (!API_URL) return { ok: false, offline: true };
     var res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ action: action }, payload || {}))
     });
     if (!res.ok) throw new Error('API ' + res.status);
+    var contentType = (res.headers.get('content-type') || '').toLowerCase();
+    if (contentType.indexOf('application/json') === -1) {
+      throw new Error('API returned non-JSON. Check Apps Script access/deploy settings.');
+    }
     return res.json();
   }
 

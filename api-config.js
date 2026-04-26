@@ -1,1 +1,1 @@
-window.WEDDING_API_URL = 'https://script.google.com/macros/s/AKfycbwE7rwp89zA3-_9hgu9tIS2u7HpVo6Yo8U4bbbFdmpqdyGurqubdy3DBRprNJpLk1Oa/exec';
+window.WEDDING_API_URL = 'https://script.google.com/macros/s/AKfycbyBsKQXUyhi46aN3Z79GIXVu3FNmtUe6HbRfg1gpFeeFC0eTuAHjjW5fhjpkL4j9GMM/exec';

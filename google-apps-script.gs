@@ -22,7 +22,8 @@ function doGet(e) {
     return json_({ ok: true, responses: listActive_() });
   }
 
-  return json_({ ok: true, status: 'alive' });
+  const ss = getSpreadsheet_();
+  return json_({ ok: true, status: 'alive', spreadsheetId: ss.getId(), spreadsheetUrl: ss.getUrl() });
 }
 
 function doPost(e) {
@@ -205,11 +206,21 @@ function getSheet_() {
 }
 
 function getSpreadsheet_() {
-  const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  const props = PropertiesService.getScriptProperties();
+  const spreadsheetId = props.getProperty('SPREADSHEET_ID');
   if (spreadsheetId) {
     return SpreadsheetApp.openById(spreadsheetId);
   }
-  return SpreadsheetApp.getActiveSpreadsheet();
+
+  const active = SpreadsheetApp.getActiveSpreadsheet();
+  if (active) {
+    props.setProperty('SPREADSHEET_ID', active.getId());
+    return active;
+  }
+
+  const created = SpreadsheetApp.create('Wedding RSVP Responses');
+  props.setProperty('SPREADSHEET_ID', created.getId());
+  return created;
 }
 
 function json_(payload) {
