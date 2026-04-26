@@ -11,7 +11,16 @@
   const coverVideo  = document.getElementById('coverVideo');
   const coverHint   = document.getElementById('coverHint');
   const coverStatus = document.getElementById('coverStatus');
+  const questGame   = document.getElementById('questGame');
+  const questContent = document.getElementById('questContent');
+  const questSpeech = document.getElementById('questSpeech');
+  const questCharacter = document.getElementById('questCharacter');
+  const questTimer  = document.getElementById('questTimer');
+  const questLeaderboard = document.getElementById('questLeaderboard');
   const API_URL     = (window.WEDDING_API_URL || '').trim();
+  const PAGE_PARAMS = new URLSearchParams(window.location.search);
+  const GAME_MODE = PAGE_PARAMS.get('mode') === 'game';
+  const GAME_AUTOSTART = PAGE_PARAMS.get('autostart') === '1';
   var siteOpened    = false;
   var introStarted  = false;
   var flashTriggered = false;
@@ -19,6 +28,7 @@
   const STORAGE_KEY_RESPONSES = 'wedding_responses';
   const STORAGE_KEY_CLIENT_ID = 'wedding_client_id';
   const STORAGE_KEY_MIGRATED = 'wedding_migrated_fingerprints_v1';
+  const STORAGE_KEY_QUIZ_RESULTS = 'wedding_quiz_results';
   const DRINK_LABELS = {
     wine: 'Вино',
     sparkling: 'Игристое',
@@ -105,6 +115,17 @@
     return res.json();
   }
 
+  async function getApi(action) {
+    if (!API_URL) return { ok: false, offline: true };
+    var res = await fetch(API_URL + '?action=' + encodeURIComponent(action), { method: 'GET' });
+    if (!res.ok) throw new Error('API ' + res.status);
+    var contentType = (res.headers.get('content-type') || '').toLowerCase();
+    if (contentType.indexOf('application/json') === -1) {
+      throw new Error('API returned non-JSON. Check Apps Script access/deploy settings.');
+    }
+    return res.json();
+  }
+
   async function migrateLocalResponsesOnce() {
     if (!API_URL) return;
     var responses = readLocalResponses();
@@ -142,6 +163,382 @@
     }
 
     writeLocalResponses(responses);
+  }
+
+  const QUEST_STAGES = [
+    {
+      type: 'question',
+      character: 'Жених1.png',
+      speech: 'Мне очень нужна помощь! Невеста пропала перед праздником. Первая подсказка уже здесь.',
+      question: 'Что чаще всего держит невеста в руках во время церемонии?',
+      options: ['Ключ от дома', 'Букет', 'Фотоальбом', 'Чашку кофе'],
+      correct: 1
+    },
+    {
+      type: 'question',
+      character: 'Жених2.png',
+      speech: 'Отлично, ты на верном пути! Следующая загадка приведет нас ближе.',
+      question: 'Какой символ чаще всего означает любовь и обещание?',
+      options: ['Колокольчик', 'Кольцо', 'Зонт', 'Часы'],
+      correct: 1
+    },
+    {
+      type: 'question',
+      character: 'Жених2.png',
+      speech: 'Я начинаю верить, что мы успеем! Давай еще один шаг.',
+      question: 'Какой месяц указан в приглашении на нашу свадьбу?',
+      options: ['Июнь', 'Август', 'Июль', 'Сентябрь'],
+      correct: 2
+    },
+    {
+      type: 'bouquet',
+      character: 'Жених2.png',
+      speech: 'Смотри, букет улетает! Поймай его как можно больше раз за 12 секунд.',
+      duration: 12
+    },
+    {
+      type: 'question',
+      character: 'Невеста1.png',
+      speech: 'Я почти нашлась! Последняя загадка, и мы снова вместе.',
+      question: 'Что лучше всего взять с собой на свадьбу кроме хорошего настроения?',
+      options: ['Злость', 'Пожелания и улыбку', 'Скуку', 'Сон'],
+      correct: 1
+    }
+  ];
+
+  const questState = {
+    started: false,
+    finished: false,
+    stageIndex: -1,
+    correctCount: 0,
+    bouquetHits: 0,
+    playerName: '',
+    playerId: '',
+    sessionId: '',
+    startedAt: 0,
+    timerHandle: null,
+    speechHandle: null,
+    bouquetMoveHandle: null,
+    bouquetTickHandle: null
+  };
+
+  function formatMs(ms) {
+    var total = Math.max(0, Math.floor(ms / 1000));
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function setQuestCharacter(src) {
+    if (!questCharacter) return;
+    var fallback = 'Невеста1.png';
+    questCharacter.onerror = function() {
+      if (questCharacter.getAttribute('src') !== fallback) questCharacter.setAttribute('src', fallback);
+    };
+    questCharacter.setAttribute('src', src || fallback);
+  }
+
+  function typeSpeech(text) {
+    if (!questSpeech) return;
+    if (questState.speechHandle) window.clearInterval(questState.speechHandle);
+    questSpeech.classList.add('typing');
+    questSpeech.textContent = '';
+    var i = 0;
+    questState.speechHandle = window.setInterval(function() {
+      i += 1;
+      questSpeech.textContent = text.slice(0, i);
+      if (i >= text.length) {
+        window.clearInterval(questState.speechHandle);
+        questState.speechHandle = null;
+        questSpeech.classList.remove('typing');
+      }
+    }, 24);
+  }
+
+  function writeQuestResultsLocal(result) {
+    try {
+      var raw = JSON.parse(localStorage.getItem(STORAGE_KEY_QUIZ_RESULTS) || '[]');
+      if (!Array.isArray(raw)) raw = [];
+      raw.push(result);
+      localStorage.setItem(STORAGE_KEY_QUIZ_RESULTS, JSON.stringify(raw.slice(-120)));
+    } catch (err) {
+      console.warn('Не удалось сохранить локальный результат квеста:', err);
+    }
+  }
+
+  function updateQuestTimer() {
+    if (!questTimer || !questState.startedAt) return;
+    questTimer.textContent = formatMs(Date.now() - questState.startedAt);
+  }
+
+  function startQuestTimer() {
+    if (questState.timerHandle) window.clearInterval(questState.timerHandle);
+    questState.startedAt = Date.now();
+    updateQuestTimer();
+    questState.timerHandle = window.setInterval(updateQuestTimer, 250);
+  }
+
+  function stopQuestTimer() {
+    if (questState.timerHandle) window.clearInterval(questState.timerHandle);
+    questState.timerHandle = null;
+  }
+
+  function renderQuestStartCard() {
+    if (!questContent) return;
+    setQuestCharacter('Жених1.png');
+    typeSpeech('Привет! Я жених, и мне нужна твоя помощь. Подскажи путь к невесте, пожалуйста.');
+    questContent.innerHTML = '' +
+      '<div class="quest-card">' +
+      '  <p class="quest-question">Как тебя зовут, герой сегодняшнего квеста?</p>' +
+      '  <input class="fi" id="questPlayerName" type="text" placeholder="Введите имя" style="padding:12px 6px;border-bottom:1px solid #bfa38a;" />' +
+      '  <p class="quest-note" style="margin-top:8px;">После кнопки "Начать" включится таймер.</p>' +
+      '  <div class="quest-actions" style="margin-top:10px;"><button class="quest-btn primary" id="questStartBtn">Начать</button></div>' +
+      '</div>';
+
+    var startBtn = document.getElementById('questStartBtn');
+    var input = document.getElementById('questPlayerName');
+    if (GAME_AUTOSTART && input) {
+      setTimeout(function() { input.focus(); }, 180);
+    }
+    if (startBtn) {
+      startBtn.addEventListener('click', function() {
+        var name = (input && input.value ? input.value : '').trim();
+        if (!name) {
+          if (input) input.focus();
+          return;
+        }
+        questState.playerName = name;
+        questState.playerId = getClientId();
+        questState.sessionId = 'quiz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        questState.correctCount = 0;
+        questState.bouquetHits = 0;
+        questState.stageIndex = -1;
+        questState.started = true;
+        questState.finished = false;
+        startQuestTimer();
+        runQuestNextStage();
+      });
+    }
+  }
+
+  function runQuestNextStage() {
+    questState.stageIndex += 1;
+    if (questState.stageIndex >= QUEST_STAGES.length) {
+      finishQuest();
+      return;
+    }
+
+    var stage = QUEST_STAGES[questState.stageIndex];
+    if (stage.type === 'question') {
+      renderQuestionStage(stage);
+      return;
+    }
+    if (stage.type === 'bouquet') {
+      renderBouquetStage(stage);
+    }
+  }
+
+  function renderQuestionStage(stage) {
+    if (!questContent) return;
+    setQuestCharacter(stage.character);
+    typeSpeech(stage.speech);
+
+    var optionsHtml = stage.options.map(function(opt, idx) {
+      return '<button class="quest-option" data-idx="' + idx + '">' + opt + '</button>';
+    }).join('');
+
+    questContent.innerHTML = '' +
+      '<div class="quest-card">' +
+      '  <p class="quest-question">' + stage.question + '</p>' +
+      '  <div class="quest-options" id="questOptions">' + optionsHtml + '</div>' +
+      '  <p class="quest-note" id="questFeedback" style="margin-top:10px;"></p>' +
+      '  <div class="quest-actions" style="margin-top:12px;"><button class="quest-btn primary" id="questNextBtn" disabled>Дальше</button></div>' +
+      '</div>';
+
+    var opts = questContent.querySelectorAll('.quest-option');
+    var nextBtn = document.getElementById('questNextBtn');
+    var feedback = document.getElementById('questFeedback');
+    var answered = false;
+
+    opts.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (answered) return;
+        answered = true;
+        var pick = Number(btn.getAttribute('data-idx'));
+        if (pick === stage.correct) {
+          questState.correctCount += 1;
+          btn.classList.add('correct');
+          if (feedback) feedback.textContent = 'Верно! Это приближает нас к встрече.';
+        } else {
+          btn.classList.add('wrong');
+          var correctBtn = questContent.querySelector('.quest-option[data-idx="' + stage.correct + '"]');
+          if (correctBtn) correctBtn.classList.add('correct');
+          if (feedback) feedback.textContent = 'Почти! Верный ответ подсвечен.';
+        }
+        if (nextBtn) nextBtn.disabled = false;
+      });
+    });
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', runQuestNextStage);
+    }
+  }
+
+  function moveBouquet(btn, zone) {
+    if (!btn || !zone) return;
+    var maxX = Math.max(0, zone.clientWidth - btn.clientWidth - 8);
+    var maxY = Math.max(0, zone.clientHeight - btn.clientHeight - 8);
+    var x = Math.floor(Math.random() * (maxX + 1));
+    var y = Math.floor(Math.random() * (maxY + 1));
+    btn.style.left = x + 'px';
+    btn.style.top = y + 'px';
+  }
+
+  function clearBouquetTimers() {
+    if (questState.bouquetMoveHandle) window.clearInterval(questState.bouquetMoveHandle);
+    if (questState.bouquetTickHandle) window.clearInterval(questState.bouquetTickHandle);
+    questState.bouquetMoveHandle = null;
+    questState.bouquetTickHandle = null;
+  }
+
+  function renderBouquetStage(stage) {
+    if (!questContent) return;
+    setQuestCharacter(stage.character);
+    typeSpeech(stage.speech);
+
+    var left = stage.duration;
+    questContent.innerHTML = '' +
+      '<div class="quest-card">' +
+      '  <p class="quest-question">Лови букет! Осталось: <span id="questBouquetLeft">' + left + '</span> сек.</p>' +
+      '  <p class="quest-note">Попаданий: <span id="questBouquetHits">0</span></p>' +
+      '  <div class="quest-bouquet-zone" id="questBouquetZone"><button class="quest-bouquet" id="questBouquetBtn" type="button">💐</button></div>' +
+      '</div>';
+
+    var zone = document.getElementById('questBouquetZone');
+    var btn = document.getElementById('questBouquetBtn');
+    var leftEl = document.getElementById('questBouquetLeft');
+    var hitsEl = document.getElementById('questBouquetHits');
+
+    questState.bouquetHits = 0;
+    moveBouquet(btn, zone);
+
+    if (btn) {
+      btn.addEventListener('click', function() {
+        questState.bouquetHits += 1;
+        if (hitsEl) hitsEl.textContent = String(questState.bouquetHits);
+        moveBouquet(btn, zone);
+      });
+    }
+
+    clearBouquetTimers();
+    questState.bouquetMoveHandle = window.setInterval(function() {
+      moveBouquet(btn, zone);
+    }, 650);
+
+    questState.bouquetTickHandle = window.setInterval(function() {
+      left -= 1;
+      if (leftEl) leftEl.textContent = String(Math.max(0, left));
+      if (left <= 0) {
+        clearBouquetTimers();
+        questContent.innerHTML = '' +
+          '<div class="quest-card">' +
+          '  <p class="quest-question">Время вышло! Ты поймал(а) букет: ' + questState.bouquetHits + ' раз.</p>' +
+          '  <div class="quest-actions"><button class="quest-btn primary" id="questAfterBouquet">Продолжить</button></div>' +
+          '</div>';
+        var next = document.getElementById('questAfterBouquet');
+        if (next) next.addEventListener('click', runQuestNextStage);
+      }
+    }, 1000);
+  }
+
+  async function loadQuestLeaderboard() {
+    if (!questLeaderboard) return;
+    if (!API_URL) {
+      questLeaderboard.textContent = 'Лидерборд появится после подключения Google Sheets.';
+      return;
+    }
+
+    try {
+      var data = await getApi('quiz_leaderboard');
+      var rows = (data && data.leaderboard) || [];
+      if (!rows.length) {
+        questLeaderboard.textContent = 'Пока нет результатов';
+        return;
+      }
+
+      questLeaderboard.innerHTML = rows.slice(0, 10).map(function(r, idx) {
+        return '<div class="quest-row"><strong>' + (idx + 1) + '</strong><span>' + (r.playerName || 'Гость') + '</span><span>' + (r.totalScore || 0) + ' очков</span><span>' + formatMs(Number(r.timeMs || 0)) + '</span></div>';
+      }).join('');
+    } catch (err) {
+      console.warn('Не удалось загрузить лидерборд:', err);
+      questLeaderboard.textContent = 'Не удалось загрузить лидерборд';
+    }
+  }
+
+  async function submitQuestResult(result) {
+    writeQuestResultsLocal(result);
+    if (!API_URL) return;
+
+    try {
+      await postApi('quiz_submit', {
+        fingerprint: 'qf_' + makeHash([result.sessionId, result.playerName, result.totalScore, result.timeMs].join('|')),
+        result: result
+      });
+    } catch (err) {
+      console.warn('Не удалось отправить результат квеста:', err);
+    }
+  }
+
+  function finishQuest() {
+    stopQuestTimer();
+    clearBouquetTimers();
+    questState.finished = true;
+    setQuestCharacter('Молодожены.png');
+    typeSpeech('Мы снова вместе! Спасибо за помощь. Ты спас(ла) наш праздник.');
+
+    var timeMs = Math.max(0, Date.now() - questState.startedAt);
+    var speedBonus = Math.max(0, 360 - Math.floor(timeMs / 1000) * 4);
+    var totalScore = questState.correctCount * 180 + questState.bouquetHits * 20 + speedBonus;
+
+    var result = {
+      sessionId: questState.sessionId,
+      playerId: questState.playerId,
+      playerName: questState.playerName,
+      correctCount: questState.correctCount,
+      bouquetHits: questState.bouquetHits,
+      timeMs: timeMs,
+      totalScore: totalScore,
+      finishedAt: new Date().toISOString()
+    };
+
+    submitQuestResult(result).then(loadQuestLeaderboard);
+
+    if (questContent) {
+      questContent.innerHTML = '' +
+        '<div class="quest-card">' +
+        '  <p class="quest-question">Готово, ' + questState.playerName + '!</p>' +
+        '  <p class="quest-note">Правильных ответов: <strong>' + questState.correctCount + '/4</strong></p>' +
+        '  <p class="quest-note">Поймано букетов: <strong>' + questState.bouquetHits + '</strong></p>' +
+        '  <p class="quest-note">Время: <strong>' + formatMs(timeMs) + '</strong></p>' +
+        '  <p class="quest-note">Итог: <strong>' + totalScore + ' очков</strong></p>' +
+        '  <div class="quest-actions" style="margin-top:12px;"><button class="quest-btn primary" id="questRestart">Сыграть еще</button></div>' +
+        '</div>';
+      var restart = document.getElementById('questRestart');
+      if (restart) restart.addEventListener('click', renderQuestStartCard);
+    }
+  }
+
+  function initQuestGame() {
+    if (!questGame) return;
+    renderQuestStartCard();
+    loadQuestLeaderboard();
+
+    if (GAME_MODE) {
+      setTimeout(function() {
+        var sec = document.getElementById('quest');
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    }
   }
 
   function setCoverStatus(text) {
@@ -183,6 +580,12 @@
       e.preventDefault();
       openEnvelope();
     });
+  }
+
+  if (GAME_MODE) {
+    setTimeout(function() {
+      revealSite();
+    }, 120);
   }
 
   function openEnvelope() {
@@ -451,6 +854,7 @@
     }, 700);
   };
 
+  initQuestGame();
   migrateLocalResponsesOnce();
 
   /* ---------- PARALLAX LEAVES ---------- */

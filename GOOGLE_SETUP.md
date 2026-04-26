@@ -20,6 +20,7 @@ After this:
 - new RSVP responses go to Google Sheets;
 - admin page reads from Google Sheets;
 - local old responses migrate one-time with duplicate/tombstone protection.
+- quiz results are written to `QuizResults` and leaderboard is loaded from the same web app.
 
 ## If admin shows "Не удалось загрузить ответы..."
 

@@ -13,6 +13,7 @@
 - RSVP submissions are stored in both local backup (`localStorage` key `wedding_responses`) and Google Sheets (if API is configured).
 - One-time migration uses `wedding_migrated_fingerprints_v1` and server tombstones so deleted rows are not re-imported from old devices.
 - `admin.html` reads/deletes rows through Google Apps Script API (`list`, `delete`); in fallback mode it only sees local browser storage.
+- Quiz game stores server results in `QuizResults` sheet via `quiz_submit`, leaderboard uses `quiz_leaderboard`, admin list/delete uses `quiz_list` and `quiz_delete`.
 - Admin password is hardcoded in `admin.html` as `123!`.
 
 ## Editing gotchas

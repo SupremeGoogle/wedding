@@ -117,11 +117,31 @@
         <tbody></tbody>
       </table>
     </div>
+
+    <div class="header" style="margin-top: 24px;">
+      <h2>Результаты квеста</h2>
+    </div>
+    <div style="overflow-x: auto;">
+      <table id="quizTable">
+        <thead>
+          <tr>
+            <th>Игрок</th>
+            <th>Очки</th>
+            <th>Время</th>
+            <th>Верно</th>
+            <th>Букеты</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
   <script src="api-config.js"></script>
   <script>
     const API_URL = (window.WEDDING_API_URL || '').trim();
     let currentRows = [];
+    let currentQuizRows = [];
 
     function checkPass() {
       const pass = document.getElementById('passInput').value;
@@ -129,6 +149,7 @@
         document.getElementById('loginBox').style.display = 'none';
         document.getElementById('adminContainer').style.display = 'flex';
         loadRows();
+        loadQuizRows();
       } else {
         alert('Неверный пароль');
       }
@@ -191,6 +212,42 @@
       }
     }
 
+    function formatMs(ms) {
+      const sec = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    async function loadQuizRows() {
+      if (!API_URL) {
+        currentQuizRows = [];
+        renderQuizTable(currentQuizRows);
+        return;
+      }
+      try {
+        const res = await fetch(API_URL + '?action=quiz_list', { method: 'GET' });
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (!res.ok || contentType.indexOf('application/json') === -1) {
+          throw new Error('QUIZ_API_UNAVAILABLE');
+        }
+        const data = await res.json();
+        currentQuizRows = (data.results || []).map(r => ({
+          sessionId: r.sessionId || '',
+          fingerprint: r.fingerprint || '',
+          playerName: r.playerName || '',
+          totalScore: Number(r.totalScore || 0),
+          timeMs: Number(r.timeMs || 0),
+          correctCount: Number(r.correctCount || 0),
+          bouquetHits: Number(r.bouquetHits || 0)
+        }));
+        renderQuizTable(currentQuizRows);
+      } catch (err) {
+        console.error(err);
+        renderQuizTable([]);
+      }
+    }
+
     function renderTable(rows) {
       const tbody = document.querySelector('#responsesTable tbody');
       tbody.innerHTML = rows.map(r => `
@@ -203,6 +260,21 @@
           <td><button onclick="deleteRow('${esc(r.responseId)}','${esc(r.fingerprint || '')}')">Удалить</button></td>
         </tr>
       `).join('') || '<tr><td colspan="6" style="text-align:center">Ответов пока нет</td></tr>';
+    }
+
+    function renderQuizTable(rows) {
+      const tbody = document.querySelector('#quizTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${esc(r.playerName || 'Гость')}</td>
+          <td>${esc(r.totalScore)}</td>
+          <td>${esc(formatMs(r.timeMs))}</td>
+          <td>${esc(r.correctCount)}</td>
+          <td>${esc(r.bouquetHits)}</td>
+          <td><button onclick="deleteQuizRow('${esc(r.sessionId)}','${esc(r.fingerprint || '')}')">Удалить</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" style="text-align:center">Результатов пока нет</td></tr>';
     }
 
     async function deleteRow(responseId, fingerprint) {
@@ -232,6 +304,28 @@
       } catch (err) {
         console.error(err);
         alert('Не удалось удалить запись.');
+      }
+    }
+
+    async function deleteQuizRow(sessionId, fingerprint) {
+      if (!confirm('Удалить результат квеста?')) return;
+      if (!API_URL) return;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'quiz_delete', sessionId, fingerprint })
+        });
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (!res.ok || contentType.indexOf('application/json') === -1) {
+          throw new Error('Quiz delete unavailable');
+        }
+        const data = await res.json();
+        if (!data.ok) throw new Error('Quiz delete failed');
+        loadQuizRows();
+      } catch (err) {
+        console.error(err);
+        alert('Не удалось удалить результат квеста.');
       }
     }
 
